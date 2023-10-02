@@ -8,6 +8,7 @@ class Spotmap {
         this.debug("Spotmap obj created.");
         this.debug(this.options);
         this.map = {};
+        this.speedUnit = 'kn';
         this.layerControl = L.control.layers({},{},{hideSingleBase: true});
         this.layers = {
             feeds: {},
@@ -495,6 +496,20 @@ class Spotmap {
     getColorDot(color){
         return '<span class="dot" style="position: relative;height: 10px;width: 10px;background-color: ' + color + ';border-radius: 50%;display: inline-block;"></span>'
     }
+    formatSpeed(speed, decimals = 1) {
+        switch (this.speedUnit.toLowerCase()) {
+            case 'kmh':
+                return `${(speed * 3.6).toFixed(decimals)} km/h`;
+            case 'ms':
+                return `${speed.toFixed(decimals)} m/s`;
+            case 'kn':
+                return `${(speed * 1.94384).toFixed(decimals)} knots`;
+            case 'mph':
+                return `${(speed * 2.23694).toFixed(decimals)} mph`;
+            default:
+                return 'Invalid unit';
+        }
+    }
     getPopupText(entry){
         let message = "<b>" + entry.type + "</b><br>";
         message += 'Time: ' + entry.time + '</br>Date: ' + entry.date + '</br>';
@@ -502,8 +517,11 @@ class Spotmap {
             message += 'Local Time: ' + entry.localtime + '</br>Local Date: ' + entry.localdate + '</br>';
         if (entry.message && entry.type == 'MEDIA')
             message += '<img width="180"  src="' + entry.message + '" class="attachment-thumbnail size-thumbnail" alt="" decoding="async" loading="lazy" /></br>';
-        else
+        else if (entry.message)
             message += entry.message + '</br>';
+        message += 'Speed: ' + this.formatSpeed(entry.speed_instant) + '</br>';
+        message += 'Speed 1hr: ' + this.formatSpeed(entry.speed_1hr) + '</br>';
+        message += 'Speed 24hr: ' + this.formatSpeed(entry.speed_24hr) + '</br>';
         if (entry.altitude > 0)
             message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
         if (entry.battery_status == 'LOW')
