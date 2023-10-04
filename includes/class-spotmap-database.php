@@ -139,6 +139,7 @@ class Spotmap_Database {
 		for ($i = $index - 1; $i > 0; $i--) {
 			$previous_point = $points[$i];
 			$previous_time = $previous_point->unixtime;
+			if ($previous_time < $start_time && $index - $i > 1) break;	// need at least 2 points
 
 			$distance = $this->calculate_distance($previous_point->latitude, $previous_point->longitude, $current_point->latitude, $current_point->longitude);
 			$time_diff = $current_point->unixtime - $previous_time;
@@ -146,8 +147,6 @@ class Spotmap_Database {
 
 			$distance_sum += $distance;
 			$time_diff_sum += $time_diff;
-
-			if ($previous_time < $start_time) break;
 		}
 
 		return ($time_diff_sum <= 0) ? 0 : $distance_sum / $time_diff_sum;
