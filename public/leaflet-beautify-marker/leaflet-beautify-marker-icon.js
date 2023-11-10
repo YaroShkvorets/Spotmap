@@ -62,8 +62,8 @@
                , iconAnchor: defaults.iconAnchor.circle
                , iconShape: 'circle'
                , iconStyle: ''
-               , innerIconAnchor: [0, 3] // circle with fa or glyphicon or marker with text
-               , innerIconStyle: ''
+               , innerIconAnchor: [-4, -4] // circle with fa or glyphicon or marker with text
+               , innerIconStyle: 'display: block;'
                , isAlphaNumericIcon: false
                , text: 1
                , borderColor: defaults.iconColor

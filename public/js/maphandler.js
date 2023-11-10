@@ -9,6 +9,7 @@ class Spotmap {
         this.debug(this.options);
         this.map = {};
         this.speedUnit = 'kn';
+        this.distanceUnit = 'nm';
         this.layerControl = L.control.layers({},{},{hideSingleBase: true});
         this.layers = {
             feeds: {},
@@ -67,7 +68,6 @@ class Spotmap {
         }
         self.layerControl.addTo(self.map);
         this.getPoints(function (response) {
-            // console.log(response);
             // this is the case if explicitly no feeds were provided
             if(!response.empty){
                 // loop thru the data received from server
@@ -496,6 +496,9 @@ class Spotmap {
     getColorDot(color){
         return '<span class="dot" style="position: relative;height: 10px;width: 10px;background-color: ' + color + ';border-radius: 50%;display: inline-block;"></span>'
     }
+    getDistance(speed, hours) {
+        return speed * hours * 1000;
+    }
     formatSpeed(speed, decimals = 1) {
         switch (this.speedUnit.toLowerCase()) {
             case 'kmh':
@@ -510,9 +513,43 @@ class Spotmap {
                 return 'Invalid unit';
         }
     }
+    formatDistance(distance, decimals = 1) {
+        switch (this.distanceUnit.toLowerCase()) {
+            case 'mi':
+                return `${(distance / 1609.34).toFixed(decimals)} miles`;
+            case 'nm':
+                return `${(distance / 1852).toFixed(decimals)} nm`;
+            case 'km':
+                return `${(distance / 1000).toFixed(decimals)} km`;
+            case 'm':
+                return `${(distance).toFixed(decimals)} m`;
+            default:
+                return 'Invalid unit';
+        }
+    }
+    timeSince(unixTime) {
+        const now = Math.floor(Date.now() / 1000); // Current UNIX timestamp in seconds
+        const secondsElapsed = now - unixTime;
+        if (secondsElapsed < 60) {
+            return secondsElapsed + " seconds";
+        } else if (secondsElapsed < 3600) {
+            const minutes = Math.floor(secondsElapsed / 60);
+            return minutes + " minute" + (minutes !== 1 ? "s" : "");
+        } else if (secondsElapsed < 86400) {
+            const hours = Math.floor(secondsElapsed / 3600);
+            return hours + " hour" + (hours !== 1 ? "s" : "");
+        } else if (secondsElapsed < 604800) {
+            const days = Math.floor(secondsElapsed / 86400);
+            return days + " day" + (days !== 1 ? "s" : "");
+        } else {
+            const weeks = Math.floor(secondsElapsed / 604800);
+            return weeks + " week" + (weeks !== 1 ? "s" : "");
+        }
+    }
     getPopupText(entry){
-        let message = "<b>" + entry.type + "</b><br>";
-        message += 'Time: ' + entry.time + '</br>Date: ' + entry.date + '</br>';
+        let message = "<b>" + entry.device_name + "</b><br>";
+        message += 'Reported: ' + this.timeSince(+entry.unixtime) + ' ago</br>';
+        // message += 'Time: ' + entry.time + '</br>Date: ' + entry.date + '</br>'; // time and date are Central timezone for some reason?
         if (entry.local_timezone && !(entry.localdate == entry.date && entry.localtime == entry.time))
             message += 'Local Time: ' + entry.localtime + '</br>Local Date: ' + entry.localdate + '</br>';
         if (entry.message && entry.type == 'MEDIA')
@@ -522,6 +559,7 @@ class Spotmap {
         message += 'Speed: ' + this.formatSpeed(entry.speed_instant) + '</br>';
         message += 'Speed 1hr: ' + this.formatSpeed(entry.speed_1hr) + '</br>';
         message += 'Speed 24hr: ' + this.formatSpeed(entry.speed_24hr) + '</br>';
+        message += 'Distance 24hr: ' + this.formatDistance(this.getDistance(entry.speed_24hr, 24)) + '</br>';
         if (entry.altitude > 0)
             message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
         if (entry.battery_status == 'LOW')
