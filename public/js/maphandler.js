@@ -8,6 +8,7 @@ class Spotmap {
         this.debug("Spotmap obj created.");
         this.debug(this.options);
         this.map = {};
+        this.points = [];
         this.speedUnit = 'kn';
         this.distanceUnit = 'nm';
         this.layerControl = L.control.layers({},{},{hideSingleBase: true});
@@ -70,9 +71,10 @@ class Spotmap {
         this.getPoints(function (response) {
             // this is the case if explicitly no feeds were provided
             if(!response.empty){
+                self.points = response;
                 // loop thru the data received from server
                 response.forEach(function (entry, index) {
-                    this.addPoint(entry);
+                    this.addPoint(entry, index);
                     this.addPointToLine(entry);
                 }, self);
 
@@ -170,7 +172,7 @@ class Spotmap {
                             let lastPoint = lodash.last(self.layers.feeds[feedName].points)
                             if (lastPoint.unixtime < entry.unixtime) {
                                 self.debug("Found a new point for Feed: " + feedName);
-                                self.addPoint(entry);
+                                self.addPoint(entry, index);
                                 self.addPointToLine(entry);
 
                                 if (self.options.mapcenter == 'last') {
@@ -546,7 +548,63 @@ class Spotmap {
             return weeks + " week" + (weeks !== 1 ? "s" : "");
         }
     }
-    getPopupText(entry){
+    // Function to calculate distance between two points using Haversine formula (spherical trigonometry)
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        // Radius of the Earth in meters
+        const earthRadius = 6371000;
+        const dLat = this.toRadians(lat2 - lat1);
+        const dLon = this.toRadians(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+    }
+    toRadians(degrees) {
+        return degrees * (Math.PI / 180);
+    }
+    calculateInstantSpeed(index = 0) {
+        if (!this.points || this.points.length < 2 || index === 0) return 0;
+        const latestPoint = this.points[index];
+        const secondLatestPoint = this.points[index - 1];
+        const timeDiff = latestPoint.unixtime - secondLatestPoint.unixtime;
+        const distance = this.calculateDistance(
+          latestPoint.latitude,
+          latestPoint.longitude,
+          secondLatestPoint.latitude,
+          secondLatestPoint.longitude
+        );
+        return timeDiff > 0 ? distance / timeDiff : 0;
+    }
+    calculateSpeed(index, timeWindowSeconds){
+        const timeDistance = this.calculateTimeDistance(index, timeWindowSeconds);
+        return timeDistance.time <= 0 ? 0 : timeDistance.distance / timeDistance.time;
+    }
+    calculateTimeDistance(index, timeWindowSeconds) {
+        if (!this.points || this.points.length < 2) {
+            return {distance: 0, time: timeWindowSeconds}; // should never happen
+        }
+        let currentPoint = this.points[index];
+        const startTime = currentPoint.unixtime - timeWindowSeconds;
+        let distanceSum = 0;
+        let timeDiffSum = 0;
+        for (let i = index - 1; i > 0; i--) {
+          const previousPoint = this.points[i];
+          if (previousPoint.unixtime < startTime && index - i > 1) {
+            break; // need at least 2 points
+          }
+          const distance = this.calculateDistance(
+            previousPoint.latitude,
+            previousPoint.longitude,
+            currentPoint.latitude,
+            currentPoint.longitude
+          );
+          const timeDiff = currentPoint.unixtime - previousPoint.unixtime;
+          distanceSum += distance;
+          timeDiffSum += timeDiff;
+          currentPoint = previousPoint;
+        }
+        return {distance: distanceSum, time: timeDiffSum};
+    }
+    getPopupText(entry, index){
         let message = "<b>" + entry.device_name + "</b><br>";
         message += 'Reported: ' + this.timeSince(+entry.unixtime) + ' ago</br>';
         // message += 'Time: ' + entry.time + '</br>Date: ' + entry.date + '</br>'; // time and date are Central timezone for some reason?
@@ -556,10 +614,10 @@ class Spotmap {
             message += '<img width="180"  src="' + entry.message + '" class="attachment-thumbnail size-thumbnail" alt="" decoding="async" loading="lazy" /></br>';
         else if (entry.message)
             message += entry.message + '</br>';
-        message += 'Speed: ' + this.formatSpeed(entry.speed_instant) + '</br>';
-        message += 'Speed 1hr: ' + this.formatSpeed(entry.speed_1hr) + '</br>';
-        message += 'Speed 24hr: ' + this.formatSpeed(entry.speed_24hr) + '</br>';
-        message += 'Distance 24hr: ' + this.formatDistance(this.getDistance(entry.speed_24hr, 24)) + '</br>';
+        message += 'Speed: ' + this.formatSpeed(this.calculateInstantSpeed(index)) + '</br>';
+        message += 'Speed 1hr: ' + this.formatSpeed(this.calculateSpeed(index, 1 * 60 * 60)) + '</br>';
+        message += 'Speed 24hr: ' + this.formatSpeed(this.calculateSpeed(index, 24 * 60 * 60)) + '</br>';
+        message += 'Distance 24hr: ' + this.formatDistance(this.calculateTimeDistance(index, 24 * 60 * 60).distance) + '</br>';
         if (entry.altitude > 0)
             message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
         if (entry.battery_status == 'LOW')
@@ -582,7 +640,7 @@ class Spotmap {
         return true;
     }
 
-    addPoint(point){
+    addPoint(point, index){
         let feedName = point.feed_name;
         let coordinates = [point.latitude, point.longitude];
         if(!this.doesFeedExists(feedName)){
@@ -592,7 +650,7 @@ class Spotmap {
         // this.getOption('lastPoint')
         
         let markerOptions= this.getMarkerOptions(point)
-        let message = this.getPopupText(point);
+        let message = this.getPopupText(point, index);
         let marker = L.marker(coordinates , markerOptions).bindPopup(message);
         
         this.layers.feeds[feedName].points.push(point);

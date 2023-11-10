@@ -100,11 +100,6 @@ class Spotmap_Database {
 				$point->localtime = wp_date(get_option('time_format'),$point->unixtime,$timezone);
 			}
 
-			// TODO: make complexity linear instead of quadratic
-			$point->speed_instant = $this->calculate_instant_speed($points, $index); // speed between the last 2 points
-			$point->speed_1hr = $this->calculate_speed($points, $index, 1 * 60 * 60); // 1 hour in seconds
-			$point->speed_24hr = $this->calculate_speed($points, $index, 24 * 60 * 60); // 24 hours in seconds
-
 			if(!empty($point->custom_message)){
 				$point->message = $point->custom_message;
 			}
@@ -114,57 +109,6 @@ class Spotmap_Database {
 		}
 		return $points;
 	}
-
-	// Function to calculate distance between two points using Haversine formula (spherical trigonometry)
-	function calculate_distance($lat1, $lon1, $lat2, $lon2) {
-		// Radius of the Earth in meters
-		$earth_radius = 6371000;
-
-		$d_lat = deg2rad($lat2 - $lat1);
-		$d_lon = deg2rad($lon2 - $lon1);
-
-		$a = sin($d_lat / 2) * sin($d_lat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($d_lon / 2) * sin($d_lon / 2);
-		$c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-		return $earth_radius * $c;
-	}
-
-	// Function to calculate average speed over a specified time window
-	function calculate_speed($points, $index, $time_window_seconds) {
-		$current_point = $points[$index];
-		$start_time = $current_point->unixtime - $time_window_seconds;
-		$distance_sum = 0;
-		$time_diff_sum = 0;
-
-		for ($i = $index - 1; $i > 0; $i--) {
-			$previous_point = $points[$i];
-			$previous_time = $previous_point->unixtime;
-			if ($previous_time < $start_time && $index - $i > 1) break;	// need at least 2 points
-
-			$distance = $this->calculate_distance($previous_point->latitude, $previous_point->longitude, $current_point->latitude, $current_point->longitude);
-			$time_diff = $current_point->unixtime - $previous_time;
-			if ($time_diff <= 0) return -1;	//should never happen
-
-			$distance_sum += $distance;
-			$time_diff_sum += $time_diff;
-		}
-
-		return ($time_diff_sum <= 0) ? 0 : $distance_sum / $time_diff_sum;
-	}
-
-	// Function to calculate instant speed
-	function calculate_instant_speed($points, $index = 0) {
-		if ($index == 0) return 0;
-
-		$latest_point = $points[$index];
-		$second_latest_point = $points[$index - 1];
-
-		$time_diff = $latest_point->unixtime - $second_latest_point->unixtime;
-		$dist = $this->calculate_distance($latest_point->latitude, $latest_point->longitude, $second_latest_point->latitude, $second_latest_point->longitude);
-
-		return ($time_diff > 0) ? $dist / $time_diff : 0;
-	}
-
 	public function insert_point($point,$multiple = false){
 		// error_log(print_r($point,true));
 		if($point['unixTime'] == 1){
