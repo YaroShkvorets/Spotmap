@@ -478,7 +478,7 @@ class Spotmap_Admin {
 		if(empty($token)) {
 			return;
 		}
-		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token;
+		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->unixTime."&units=metric";
 		$response = wp_remote_get( $url );
 		// error_log( wp_remote_retrieve_response_code($response) );
 		$json = wp_remote_retrieve_body( $response );
