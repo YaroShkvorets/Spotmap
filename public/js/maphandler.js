@@ -551,11 +551,11 @@ constructor(options) {
         const convertToFahrenheit = (temperature) => (+temperature * 9/5) - 459.67;
         switch (this.tempUnit.toUpperCase()) {
             case 'C':
-                return `${convertToCelsius(kelvin).toFixed(decimals)} °C`;
+                return `${convertToCelsius(kelvin).toFixed(decimals)}°C`;
             case 'K':
                 return `${(+kelvin).toFixed(decimals)} K`;
             case 'F':
-                return `${convertToFahrenheit(kelvin).toFixed(decimals)} °F`;
+                return `${convertToFahrenheit(kelvin).toFixed(decimals)}°F`;
             default:
                 return 'Invalid unit';
         }
@@ -662,6 +662,10 @@ constructor(options) {
         message += 'Distance 24hr: ' + this.formatDistance(this.calculateTimeDistance(index, 24 * 60 * 60).distance) + '</br>';
         // if (entry.altitude > 0)
         //     message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
+        if (entry.battery_status == 'LOW')
+            message += '🚨 Battery status is low!' + '</br>';
+        if (entry.hiddenPoints)
+            message += entry.hiddenPoints.count + ' hidden points ' + entry.hiddenPoints.radius + ' meters</br>';
         if (entry.temp) {
             message += `<br><strong>Weather</strong></br>`;
             message += `🌡️ ${this.formatTemperature(entry.temp)} ${entry.weather_description ?? ""}</br>`;
@@ -671,10 +675,6 @@ constructor(options) {
             message += `💧 ${entry.humidity}%</br>`;
             message += `🔭 ${entry.visibility} m</br>`;
         }
-        if (entry.battery_status == 'LOW')
-            message += 'Battery status is low!' + '</br>';
-        if (entry.hiddenPoints)
-            message += 'There are ' + entry.hiddenPoints.count + ' hidden Points within a radius of ' + entry.hiddenPoints.radius + ' meters</br>';
         return message;
     }
     setNewFeedLayer(feedName){
