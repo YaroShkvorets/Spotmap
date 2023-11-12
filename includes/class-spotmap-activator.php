@@ -130,24 +130,24 @@ class Spotmap_Activator {
 			}
 		}
 		
-		$args = array(
-			'post_type' => 'attachment',
-			'post_mime_type' => 'image',
-			'posts_per_page' => -1
-		);
+		// $args = array(
+		// 	'post_type' => 'attachment',
+		// 	'post_mime_type' => 'image',
+		// 	'posts_per_page' => -1
+		// );
 		
-		$attachments = get_posts($args);
+		// $attachments = get_posts($args);
 
-		if ($attachments) {
-			foreach ($attachments as $attachment) {
-				// Get attachment details
-				$attachment_id = $attachment->ID;
-				error_log($attachment_id);
-				if ($db->does_media_exist($attachment_id)) {
-					continue;
-				}
-				$admin->add_images_to_map($attachment_id);
-			}
-		} 
+		// if ($attachments) {
+		// 	foreach ($attachments as $attachment) {
+		// 		// Get attachment details
+		// 		$attachment_id = $attachment->ID;
+		// 		// error_log($attachment_id);
+		// 		if ($db->does_media_exist($attachment_id)) {
+		// 			continue;
+		// 		}
+		// 		$admin->add_images_to_map($attachment_id);
+		// 	}
+		// } 
 	}
 }

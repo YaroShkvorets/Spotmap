@@ -467,10 +467,10 @@ class Spotmap_Admin {
 
 	function get_weather(){
 		global $wpdb;
-		$row = $wpdb->get_row("SELECT * FROM " . $wpdb->prefix . "spotmap_points ORDER BY time DESC LIMIT 1;");
-		//error_log('getting weather data');
+		$row = $wpdb->get_row("SELECT * FROM " . $wpdb->prefix . "spotmap_points WHERE temp IS NULL ORDER BY time DESC LIMIT 1;");
+		// error_log('getting weather data');
 
-		if(empty($row) || !empty($row->temp)){
+		if(empty($row)){
 			return;
 		}
 
@@ -478,7 +478,7 @@ class Spotmap_Admin {
 		if(empty($token)) {
 			return;
 		}
-		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->unixTime."&units=metric";
+		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->unixTime;//."&units=metric";
 		$response = wp_remote_get( $url );
 		// error_log( wp_remote_retrieve_response_code($response) );
 		$json = wp_remote_retrieve_body( $response );
@@ -522,7 +522,7 @@ class Spotmap_Admin {
 				$row->id
 			])
 		);
-		// wp_schedule_single_event( time()+2, 'spotmap_get_weather_hook' );
+		wp_schedule_single_event( time()+5, 'spotmap_get_weather_hook' );
 	}
 
 	function get_maps_config_content($section){
@@ -583,13 +583,15 @@ class Spotmap_Admin {
 		// if media has no GPS/timetaken info skip
 		if (!isset($exif["GPS"])) { return; }
 		if (!isset($exif["EXIF"]['DateTimeOriginal'])) { return; }
-		
+
 		$latitude = $this->gps($exif["GPS"]["GPSLatitude"], $exif["GPS"]["GPSLatitudeRef"]);
 		$longitude = $this->gps($exif["GPS"]["GPSLongitude"], $exif["GPS"]["GPSLongitudeRef"]);
+		$model = $exif["IFD0"]['Make']." ".$exif["IFD0"]['Model'];
 		$timestamp = strtotime($exif["EXIF"]['DateTimeOriginal']);
 		$image = get_post_field('guid', $attachment_id);
 
 		$this->db->insert_point([
+			"id" => $attachment_id,
 			"latitude" => $latitude,
 			"longitude" => $longitude,
 			"unixTime" => $timestamp,
@@ -598,7 +600,7 @@ class Spotmap_Admin {
 			"feedId" => "media",
 			"messengerName" => "media",
 			"messageType" => "MEDIA",
-			"modelId" => $attachment_id,
+			"modelId" => $model,
 			"messageContent" => $image
 
 
@@ -614,7 +616,7 @@ class Spotmap_Admin {
 		for ($i = 0; $i < 3; $i++) {
 		  $part = explode('/', $coordinate[$i]);
 		  if (count($part) == 1) {
-			$coordinate[$i] = $part[0];
+			$coordinate[$i] = floatval($part[0]);
 		  } else if (count($part) == 2) {
 			$coordinate[$i] = floatval($part[0])/floatval($part[1]);
 		  } else {
