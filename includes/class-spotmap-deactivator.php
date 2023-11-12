@@ -8,5 +8,6 @@ class Spotmap_Deactivator {
 		//stop checking for new data from the feed
 		wp_unschedule_event( time(), 'spotmap_api_crawler_hook' );
 		wp_unschedule_event( time(), 'spotmap_get_timezone_hook' );
+		wp_unschedule_event( time(), 'spotmap_get_weather_hook' );
 	}
 }

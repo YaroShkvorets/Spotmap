@@ -24,8 +24,18 @@ class Spotmap_Activator {
             `model` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
             `device_name` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
             `local_timezone` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+            `temp` float(6,2) DEFAULT NULL,
+            `pressure` int(5) DEFAULT NULL,
+            `humidity` int(3) DEFAULT NULL,
+            `clouds` int(3) DEFAULT NULL,
+            `visibility` int(6) DEFAULT NULL,
+            `wind_speed` float(5,2) DEFAULT NULL,
+            `wind_deg` float(6,2) DEFAULT NULL,
+            `wind_gust` int(3) DEFAULT NULL,
+            `weather_description` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+            `weather_icon` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
             PRIMARY KEY (`id`),
-            UNIQUE KEY `id_UNIQUE` (`id`) 
+            UNIQUE KEY `id_UNIQUE` (`id`)
             )$charset_collate";
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -38,7 +48,9 @@ class Spotmap_Activator {
 		if ( ! wp_next_scheduled( 'spotmap_get_timezone_hook' ) ) {
 			wp_schedule_single_event( time(),'spotmap_get_timezone_hook' );
 		}
-		
+		if ( ! wp_next_scheduled( 'spotmap_get_weather_hook' ) ) {
+			wp_schedule_single_event( time(),'spotmap_get_weather_hook' );
+		}
 		// activate for first time
 		if(!get_option('spotmap_api_providers')){
 			$data_r = ['findmespot' => "Spot Feed"];

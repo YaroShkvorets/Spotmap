@@ -151,6 +151,8 @@ class Spotmap_Database {
 		
 		// schedule event to calc local timezone 
 		wp_schedule_single_event( time(), 'spotmap_get_timezone_hook' );
+		// schedule event to get weather
+		wp_schedule_single_event( time(), 'spotmap_get_weather_hook' );
 		return $result;
 	}
 	/**

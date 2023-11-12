@@ -153,6 +153,11 @@ class Spotmap_Admin {
 				"type" => 'text',
 				"description" => __("Do you travel to other timezones? Store and show the local time of a position with a timezonedb API token. <a href=\"https://timezonedb.com/register\">Register for free</a>"),
 			],
+			'openweathermap'=> [
+				"label" => "openweathermap.org",
+				"type" => 'text',
+				"description" => __("Show the current weather at your position with a openweathermap API token. <a href=\"https://openweathermap.org\">Register for free</a>"),
+			],
 			'mapbox'=> [
 				"label" => "mapbox.com",
 				"type" => 'text',
@@ -459,6 +464,67 @@ class Spotmap_Admin {
 		);
 		wp_schedule_single_event( time()+2, 'spotmap_get_timezone_hook' );
 	}
+
+	function get_weather(){
+		global $wpdb;
+		$row = $wpdb->get_row("SELECT * FROM " . $wpdb->prefix . "spotmap_points ORDER BY time DESC LIMIT 1;");
+		//error_log('getting weather data');
+
+		if(empty($row) || !empty($row->temp)){
+			return;
+		}
+
+		$token = get_option('spotmap_api_tokens')['openweathermap'];
+		if(empty($token)) {
+			return;
+		}
+		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token;
+		$response = wp_remote_get( $url );
+		// error_log( wp_remote_retrieve_response_code($response) );
+		$json = wp_remote_retrieve_body( $response );
+		if ( wp_remote_retrieve_response_code($response) != 200){
+			error_log( wp_remote_retrieve_response_code($response) );
+			// wait a sec longer ....
+			// wp_schedule_single_event( time()+10, 'spotmap_get_weather_hook' );
+			return;
+		}
+		$response = json_decode($json, true);
+		if(!isset($response) || !isset($response['current']) || !isset($response['current']['temp'])){
+			error_log(print_r(json_decode($json, true),true));
+			// wp_schedule_single_event( time()+10, 'spotmap_get_weather_hook' );
+			return;
+		}
+		$weather = $response['current'];
+		// error_log(print_r(json_decode($json, true),true));
+		$wpdb->query( $wpdb->prepare( "
+			UPDATE `{$wpdb->prefix}spotmap_points`
+			SET `temp` = %f,
+				`pressure` = %d,
+				`humidity` = %d,
+				`clouds` = %d,
+				`visibility` = %d,
+				`wind_speed` = %f,
+				`wind_deg` = %d,
+				`wind_gust` = %f,
+				`weather_description` = %s,
+				`weather_icon` = %s
+			WHERE id = %s",
+			[	$weather['temp'],
+				$weather['pressure'],
+				$weather['humidity'],
+				$weather['clouds'],
+				$weather['visibility'],
+				$weather['wind_speed'],
+				$weather['wind_deg'],
+				$weather['wind_gust'],
+				(isset($weather['weather']) && count($weather['weather']) > 0) ? $weather['weather'][0]['description'] : null,
+        		(isset($weather['weather']) && count($weather['weather']) > 0) ? $weather['weather'][0]['icon'] : null,
+				$row->id
+			])
+		);
+		// wp_schedule_single_event( time()+2, 'spotmap_get_weather_hook' );
+	}
+
 	function get_maps_config_content($section){
 		$maps_file = plugin_dir_path( dirname( __FILE__ ) ) . 'config/maps.json';
 		if(file_exists($maps_file)){
@@ -481,6 +547,7 @@ class Spotmap_Admin {
 			["option" => 'linz.govt.nz', "token"=>"LINZToken"],
 			["option" => 'geoservices.ign.fr', "token"=>"geoportailToken"],
 			["option" => 'osdatahub.os.uk', "token"=>"osdatahubToken"],
+			["option" => 'openweathermap', "token"=>"openweathermapToken"]
 		];
 		$api_tokens = get_option('spotmap_api_tokens');
 		foreach ($maps as $name => &$data) {

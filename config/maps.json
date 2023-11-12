@@ -255,7 +255,7 @@
     }
   },
   "overlays": {
-    
+
     "marine-traffic": {
       "label": "Marine Traffic",
       "url": "https://tiles.marinetraffic.com/ais_helpers/shiptilesingle.aspx?output=png&sat=1&grouping=shiptype&tile_size=256&legends=1&zoom={z}&X={x}&Y={y}",
@@ -282,6 +282,15 @@
         "maxZoom": 20,
         "continuousWorld": "true",
         "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenSeaMap</a> contributors"
+      }
+    },
+    "openweathermap-percipitation": {
+      "label": "OpenWeatherMap Percipitation",
+      "url": "https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid={openweathermapToken}",
+      "options": {
+        "layer": "precipitation_new",
+        "openweathermapToken": "",
+        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
       }
     }
   }

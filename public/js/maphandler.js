@@ -1,5 +1,5 @@
 class Spotmap {
-    constructor(options) {
+constructor(options) {
         if (!options.maps) {
             console.error("Missing important options!!");
         }
@@ -11,6 +11,7 @@ class Spotmap {
         this.points = [];
         this.speedUnit = 'kn';
         this.distanceUnit = 'nm';
+        this.tempUnit = 'C';
         this.layerControl = L.control.layers({},{},{hideSingleBase: true});
         this.layers = {
             feeds: {},
@@ -501,45 +502,88 @@ class Spotmap {
     getDistance(speed, hours) {
         return speed * hours * 1000;
     }
-    formatSpeed(speed, decimals = 1) {
-        switch (this.speedUnit.toLowerCase()) {
-            case 'kmh':
-                return `${(speed * 3.6).toFixed(decimals)} km/h`;
-            case 'ms':
-                return `${speed.toFixed(decimals)} m/s`;
-            case 'kn':
-                return `${(speed * 1.94384).toFixed(decimals)} knots`;
-            case 'mph':
-                return `${(speed * 2.23694).toFixed(decimals)} mph`;
-            default:
-                return 'Invalid unit';
+    formatSpeed(speed1, speed2 = null, decimals = 1) {
+        const formatSingleSpeed = (speed) => {
+            switch (this.speedUnit.toLowerCase()) {
+                case 'kmh':
+                    return `${(+speed * 3.6).toFixed(decimals)} km/h`;
+                case 'ms':
+                    return `${(+speed).toFixed(decimals)} m/s`;
+                case 'kn':
+                    return `${(+speed * 1.94384).toFixed(decimals)} knots`;
+                case 'mph':
+                    return `${(+speed * 2.23694).toFixed(decimals)} mph`;
+                default:
+                    return 'Invalid unit';
+            }
+        };
+        if (speed2 !== null) {
+            const formattedSpeed1 = formatSingleSpeed(speed1).split(' ')[0];
+            const formattedSpeed2 = formatSingleSpeed(speed2);
+            return `${formattedSpeed1}-${formattedSpeed2}`;
+        } else {
+            return formatSingleSpeed(speed1);
         }
     }
     formatDistance(distance, decimals = 1) {
         switch (this.distanceUnit.toLowerCase()) {
             case 'mi':
-                return `${(distance / 1609.34).toFixed(decimals)} miles`;
+                return `${(+distance / 1609.34).toFixed(decimals)} miles`;
             case 'nm':
-                return `${(distance / 1852).toFixed(decimals)} nm`;
+                return `${(+distance / 1852).toFixed(decimals)} nm`;
             case 'km':
-                return `${(distance / 1000).toFixed(decimals)} km`;
+                return `${(+distance / 1000).toFixed(decimals)} km`;
             case 'm':
-                return `${(distance).toFixed(decimals)} m`;
+                return `${(+distance).toFixed(decimals)} m`;
             default:
                 return 'Invalid unit';
+        }
+    }
+    getWindDirection(degrees) {
+        const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+        const letterDirections = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const index1 = Math.round(+degrees / 22.5) % 16;
+        const index2 = Math.round((+degrees + 180) / 45) % 8;
+        return `${arrows[index2]} ${letterDirections[index1]}`;
+    }
+    formatTemperature(kelvin, decimals = 1) {
+        const convertToCelsius = (temperature) => +temperature - 273.15;
+        const convertToFahrenheit = (temperature) => (+temperature * 9/5) - 459.67;
+        switch (this.tempUnit.toUpperCase()) {
+            case 'C':
+                return `${convertToCelsius(kelvin).toFixed(decimals)} °C`;
+            case 'K':
+                return `${(+kelvin).toFixed(decimals)} K`;
+            case 'F':
+                return `${convertToFahrenheit(kelvin).toFixed(decimals)} °F`;
+            default:
+                return 'Invalid unit';
+        }
+    }
+    getCloudCoverEmoji(percentage) {
+        if (+percentage <= 10) {
+            return '☀️'; // Clear sky
+        } else if (+percentage <= 30) {
+            return '🌤️'; // Mostly clear
+        } else if (+percentage <= 50) {
+            return '⛅'; // Partly cloudy
+        } else if (+percentage <= 70) {
+            return '🌥️'; // Mostly cloudy
+        } else {
+            return '☁️'; // Cloudy
         }
     }
     timeSince(unixTime) {
         const now = Math.floor(Date.now() / 1000); // Current UNIX timestamp in seconds
         const secondsElapsed = now - unixTime;
         if (secondsElapsed < 60) {
-            return secondsElapsed + " seconds";
+            return secondsElapsed + " secs";
         } else if (secondsElapsed < 3600) {
             const minutes = Math.floor(secondsElapsed / 60);
-            return minutes + " minute" + (minutes !== 1 ? "s" : "");
+            return minutes + " min" + (minutes !== 1 ? "s" : "");
         } else if (secondsElapsed < 86400) {
             const hours = Math.floor(secondsElapsed / 3600);
-            return hours + " hour" + (hours !== 1 ? "s" : "");
+            return hours + " hr" + (hours !== 1 ? "s" : "");
         } else if (secondsElapsed < 604800) {
             const days = Math.floor(secondsElapsed / 86400);
             return days + " day" + (days !== 1 ? "s" : "");
@@ -605,11 +649,9 @@ class Spotmap {
         return {distance: distanceSum, time: timeDiffSum};
     }
     getPopupText(entry, index){
-        let message = "<b>" + entry.device_name + "</b><br>";
-        message += 'Reported: ' + this.timeSince(+entry.unixtime) + ' ago</br>';
-        // message += 'Time: ' + entry.time + '</br>Date: ' + entry.date + '</br>'; // time and date are Central timezone for some reason?
+        let message = `<b>${entry.device_name}</b> - ${this.timeSince(+entry.unixtime)} ago</br>`;
         if (entry.local_timezone && !(entry.localdate == entry.date && entry.localtime == entry.time))
-            message += 'Local Time: ' + entry.localtime + '</br>Local Date: ' + entry.localdate + '</br>';
+            message += '🕑 ' + entry.localtime + ' ' + entry.localdate + '</br>';
         if (entry.message && entry.type == 'MEDIA')
             message += '<img width="180"  src="' + entry.message + '" class="attachment-thumbnail size-thumbnail" alt="" decoding="async" loading="lazy" /></br>';
         else if (entry.message)
@@ -618,8 +660,17 @@ class Spotmap {
         message += 'Speed 1hr: ' + this.formatSpeed(this.calculateSpeed(index, 1 * 60 * 60)) + '</br>';
         message += 'Speed 24hr: ' + this.formatSpeed(this.calculateSpeed(index, 24 * 60 * 60)) + '</br>';
         message += 'Distance 24hr: ' + this.formatDistance(this.calculateTimeDistance(index, 24 * 60 * 60).distance) + '</br>';
-        if (entry.altitude > 0)
-            message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
+        // if (entry.altitude > 0)
+        //     message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
+        if (entry.temp) {
+            message += `<br><strong>Weather</strong></br>`;
+            message += `🌡️ ${this.formatTemperature(entry.temp)} ${entry.weather_description ?? ""}</br>`;
+            message += `🌬️ ${this.getWindDirection(entry.wind_deg)} ${this.formatSpeed(entry.wind_speed, entry.wind_gust, 0)}</br>`;
+            message += `${this.getCloudCoverEmoji(entry.clouds)} ${entry.clouds}% cloud cover</br>`;
+            message += `💨 ${entry.pressure} hPa</br>`;
+            message += `💧 ${entry.humidity}%</br>`;
+            message += `🔭 ${entry.visibility} m</br>`;
+        }
         if (entry.battery_status == 'LOW')
             message += 'Battery status is low!' + '</br>';
         if (entry.hiddenPoints)
