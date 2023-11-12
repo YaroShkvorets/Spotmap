@@ -33,6 +33,22 @@
         "attribution": "© <a href='https://apps.mapbox.com/feedback/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
       }
     },
+    "stadia-osm-bright": {
+      "label": "Stadia Bright",
+      "url": "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
+      "options": {
+        "maxZoom": 20,
+        "attribution": "© <a href='https://stadiamaps.com/'>Stadia Maps</a>, © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
+      }
+    },
+    "stadia-alidade-smooth": {
+      "label": "Stadia Alidade Smooth",
+      "url": "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+      "options": {
+        "maxZoom": 20,
+        "attribution": "© <a href='https://stadiamaps.com/'>Stadia Maps</a>, © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
+      }
+    },
     "tf-landscape": {
       "label": "Landscape",
       "url": "https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey={thunderforestToken}",
@@ -153,12 +169,28 @@
         "maxZoom": "16"
       }
     },
+    "stamen-terrain": {
+      "label": "Stamen Terrain",
+      "url": "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png",
+      "options": {
+        "attribution": "Map tiles by <a href='http://stamen.com'>Stamen Design</a>, <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a> &mdash; Map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+        "maxZoom": "20"
+      }
+    },
     "esri-natgeoworldmap": {
       "label": "Nat Geo Map",
       "url": "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
       "options": {
         "attribution": "Tiles © Esri — National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC",
         "maxZoom": "12"
+      }
+    },
+    "esri-world-imagery": {
+      "label": "Esri World Imagery",
+      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "options": {
+        "attribution": "Tiles © Esri",
+        "maxZoom": "22"
       }
     },
     "uk-os-outdoor": {
