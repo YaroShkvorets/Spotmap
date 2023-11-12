@@ -533,13 +533,7 @@ class Spotmap_Admin {
 		return;
 	}
 
-	public function get_overlays(){
-		return $this->get_maps_config_content("overlays");
-	}
-
-	public function get_maps(){
-		$maps = $this->get_maps_config_content("baseLayers");
-
+	function set_api_tokens($maps) {
 		// remove maps which need an API key
 		$api_names = [
 			["option" => 'mapbox', "token"=>"mapboxToken"],
@@ -562,6 +556,16 @@ class Spotmap_Admin {
 			}
 		}
 		return $maps;
+	}
+
+	public function get_overlays(){
+		$overlays = $this->get_maps_config_content("overlays");
+		return $this->set_api_tokens($overlays);
+	}
+
+	public function get_maps(){
+		$maps = $this->get_maps_config_content("baseLayers");
+		return $this->set_api_tokens($maps);
 	}
 	public function delete_images_from_map($attachment_id) {
 		error_log($attachment_id . "is being deleted");
