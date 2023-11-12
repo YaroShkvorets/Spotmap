@@ -102,7 +102,7 @@ class Spotmap_Admin {
 			'spotmap-marker-icon-section',
 			__('Marker icon options'),
 			[$this,'settings_section_icons'],
-			'spotmap-marker-group',
+			'spotmap-marker-group'
 		);
 		// error_log(print_r(get_option('spotmap_marker'),TRUE));
 
@@ -187,6 +187,7 @@ class Spotmap_Admin {
 		$this::add_bulk_settings($settings,'spotmap-thirdparties-group','spotmap-thirdparty-section');
 
 		// DEFAULT SECTION
+		register_setting( 'spotmap-defaults-group', 'spotmap_default_values');
 		add_settings_section(
 			'spotmap-defaults',
 			__('Default Values'),
