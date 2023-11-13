@@ -288,7 +288,7 @@
       "label": "OpenWeatherMap Percipitation",
       "url": "https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid={openweathermapToken}",
       "options": {
-        "layer": "precipitation_new",
+        "layer": "precipitation",
         "openweathermapToken": "",
         "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
       }
