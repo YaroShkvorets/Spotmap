@@ -517,13 +517,12 @@ constructor(options) {
                     return 'Invalid unit';
             }
         };
-        if (speed2 !== null) {
-            const formattedSpeed1 = formatSingleSpeed(speed1).split(' ')[0];
-            const formattedSpeed2 = formatSingleSpeed(speed2);
-            return `${formattedSpeed1}-${formattedSpeed2}`;
-        } else {
+        if (!speed2 || +speed1 >= +speed2) {
             return formatSingleSpeed(speed1);
         }
+        const formattedSpeed1 = formatSingleSpeed(speed1).split(' ')[0];
+        const formattedSpeed2 = formatSingleSpeed(speed2);
+        return `${formattedSpeed1}-${formattedSpeed2}`; 
     }
     formatDistance(distance, decimals = 1) {
         switch (this.distanceUnit.toLowerCase()) {
