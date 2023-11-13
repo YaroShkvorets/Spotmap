@@ -499,9 +499,6 @@ constructor(options) {
     getColorDot(color){
         return '<span class="dot" style="position: relative;height: 10px;width: 10px;background-color: ' + color + ';border-radius: 50%;display: inline-block;"></span>'
     }
-    getDistance(speed, hours) {
-        return speed * hours * 1000;
-    }
     formatSpeed(speed1, speed2 = null, decimals = 1) {
         const formatSingleSpeed = (speed) => {
             switch (this.speedUnit.toLowerCase()) {
@@ -522,7 +519,7 @@ constructor(options) {
         }
         const formattedSpeed1 = formatSingleSpeed(speed1).split(' ')[0];
         const formattedSpeed2 = formatSingleSpeed(speed2);
-        return `${formattedSpeed1}-${formattedSpeed2}`; 
+        return `${formattedSpeed1}-${formattedSpeed2}`;
     }
     formatDistance(distance, decimals = 1) {
         switch (this.distanceUnit.toLowerCase()) {
@@ -586,9 +583,15 @@ constructor(options) {
         } else if (secondsElapsed < 604800) {
             const days = Math.floor(secondsElapsed / 86400);
             return days + " day" + (days !== 1 ? "s" : "");
-        } else {
+        } else if (secondsElapsed < 2592000) { // 30 days
             const weeks = Math.floor(secondsElapsed / 604800);
             return weeks + " week" + (weeks !== 1 ? "s" : "");
+        } else if (secondsElapsed < 31536000) { // 365 days
+            const months = Math.floor(secondsElapsed / 2592000);
+            return months + " month" + (months !== 1 ? "s" : "");
+        } else {
+            const years = Math.floor(secondsElapsed / 31536000);
+            return years + " year" + (years !== 1 ? "s" : "");
         }
     }
     // Function to calculate distance between two points using Haversine formula (spherical trigonometry)
