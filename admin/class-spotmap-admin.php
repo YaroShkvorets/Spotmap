@@ -478,23 +478,23 @@ class Spotmap_Admin {
 		if(empty($token)) {
 			return;
 		}
-		$url = "https://api.openweathermap.org/data/3.0/onecall?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->unixTime;//."&units=metric";
+		$url = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->time;//."&units=metric";
 		$response = wp_remote_get( $url );
 		// error_log( wp_remote_retrieve_response_code($response) );
 		$json = wp_remote_retrieve_body( $response );
 		if ( wp_remote_retrieve_response_code($response) != 200){
-			error_log( wp_remote_retrieve_response_code($response) );
+			error_log("Error ".wp_remote_retrieve_response_code($response)." when calling ".$url );
 			// wait a sec longer ....
 			// wp_schedule_single_event( time()+10, 'spotmap_get_weather_hook' );
 			return;
 		}
 		$response = json_decode($json, true);
-		if(!isset($response) || !isset($response['current']) || !isset($response['current']['temp'])){
+		if(!isset($response) || !isset($response['data']) || !is_array($response['data'])){
 			error_log(print_r(json_decode($json, true),true));
 			// wp_schedule_single_event( time()+10, 'spotmap_get_weather_hook' );
 			return;
 		}
-		$weather = $response['current'];
+		$weather = $response['data'][0];
 		// error_log(print_r(json_decode($json, true),true));
 		$wpdb->query( $wpdb->prepare( "
 			UPDATE `{$wpdb->prefix}spotmap_points`
