@@ -55,6 +55,17 @@ constructor(options) {
         self.getOption('maps');
         this.addButtons();
         
+        var rulerOptions = {
+            position: 'bottomleft',
+            lengthUnit: {
+              factor: 0.539956803,    //  from km to nm
+              display: 'Nautical Miles',
+              decimal: 2,
+              label: 'Distance:'
+            }
+          };
+          L.control.ruler(rulerOptions).addTo(this.map);
+
         // define obj to post data
         let body = {
             'action': 'get_positions',

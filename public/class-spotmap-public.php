@@ -17,6 +17,7 @@ class Spotmap_Public{
 		// wp_enqueue_style( 'dashicon', '/wp-includes/css/dashicons.css');
 		wp_enqueue_style( 'font-awesome', plugin_dir_url( __DIR__ ). 'includes/css/font-awesome-5.15-all.min.css');
 		wp_enqueue_style( 'leaflet-beautify-marker', plugin_dir_url( __FILE__ ) . 'leaflet-beautify-marker/leaflet-beautify-marker-icon.css');
+		wp_enqueue_style( 'leaflet-ruler', plugin_dir_url( __FILE__ ) . 'leaflet-ruler/leaflet-ruler.css');
     }
 
 	public function enqueue_block_editor_assets(){
@@ -41,6 +42,7 @@ class Spotmap_Public{
         wp_enqueue_script('leaflet-beautify-marker', plugin_dir_url( __FILE__ ) . 'leaflet-beautify-marker/leaflet-beautify-marker-icon.js');
         // wp_enqueue_script('leaflet-text-path', 'https://makinacorpus.github.io/Leaflet.TextPath/leaflet.textpath.js');
 		wp_enqueue_script('leaflet-text-path',plugin_dir_url( __FILE__ ) . 'leaflet-textpath/leaflet.textpath.js');
+		wp_enqueue_script('leaflet-ruler',plugin_dir_url( __FILE__ ) . 'leaflet-ruler/leaflet-ruler.js');
 
 	}
 
