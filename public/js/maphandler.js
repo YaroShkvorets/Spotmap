@@ -1,5 +1,5 @@
 class Spotmap {
-constructor(options) {
+    constructor(options) {
         if (!options.maps) {
             console.error("Missing important options!!");
         }
@@ -12,14 +12,16 @@ constructor(options) {
         this.speedUnit = 'kn';
         this.distanceUnit = 'nm';
         this.tempUnit = 'C';
-        this.layerControl = L.control.layers({},{},{hideSingleBase: true});
+        this.layerControl = L.control.layers({}, {}, {
+            hideSingleBase: true
+        });
         this.layers = {
             feeds: {},
             gpx: {},
         };
     }
 
-    doesFeedExists(feedName){
+    doesFeedExists(feedName) {
         return this.layers.feeds.hasOwnProperty(feedName)
     }
     initMap() {
@@ -48,23 +50,49 @@ constructor(options) {
         this.map = L.map(this.options.mapId, mapOptions);
         L.control.scale().addTo(this.map);
         // use no prefix in attribution
-        L.control.attribution({prefix: ''}).addTo(this.map);
+        L.control.attribution({
+            prefix: ''
+        }).addTo(this.map);
         // enable scrolling with mouse once the map was focused
-        this.map.once('focus', function () { self.map.scrollWheelZoom.enable(); });
+        this.map.once('focus', function () {
+            self.map.scrollWheelZoom.enable();
+        });
+
+        var info = L.control({
+            position: 'bottomright'
+        });
+        info.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            return this._div;
+        };
+
+        info.update = function (props) {
+            const contents = Object.entries(props).map(value => `<b>${value[0]}</b>: ${value[1]}`).join('<br/>');
+            this._div.innerHTML = `<h4>Under Sail</h4>${contents}`;
+        };
+        // info.addTo(this.map);
 
         self.getOption('maps');
         this.addButtons();
-        
+
         var rulerOptions = {
             position: 'bottomleft',
             lengthUnit: {
-              factor: 0.539956803,    //  from km to nm
-              display: 'Nautical Miles',
-              decimal: 2,
-              label: 'Distance:'
-            }
-          };
-          L.control.ruler(rulerOptions).addTo(this.map);
+                factor: 0.539956803, //  from km to nm
+                display: 'Nautical Miles',
+                decimal: 2,
+                label: 'Distance:'
+            },
+            circleMarker: { // Leaflet circle marker options for points used in this plugin
+                color: 'black',
+                radius: 1
+            },
+            lineStyle: { // Leaflet polyline options for lines used in this plugin
+                color: 'black',
+                dashArray: '1,6'
+            },
+        };
+        L.control.ruler(rulerOptions).addTo(this.map);
 
         // define obj to post data
         let body = {
@@ -82,7 +110,7 @@ constructor(options) {
         self.layerControl.addTo(self.map);
         this.getPoints(function (response) {
             // this is the case if explicitly no feeds were provided
-            if(!response.empty){
+            if (!response.empty) {
                 self.points = response;
                 // loop thru the data received from server
                 response.forEach(function (entry, index) {
@@ -96,17 +124,24 @@ constructor(options) {
                 for (var i = 0; i < self.options.gpx.length; i++) {
                     let entry = self.options.gpx[i];
                     let title = self.options.gpx[i].title;
-                    let color = self.getOption('color', { gpx: entry });
+                    let color = self.getOption('color', {
+                        gpx: entry
+                    });
                     let gpxOption = {
                         async: true,
                         marker_options: {
                             wptIcons: {
-                                '': self.getMarkerIcon({color: color}),
+                                '': self.getMarkerIcon({
+                                    color: color
+                                }),
                             },
                             wptIconsType: {
-                                '': self.getMarkerIcon({color: color}),
+                                '': self.getMarkerIcon({
+                                    color: color
+                                }),
                             },
-                            startIconUrl: '', endIconUrl: '',
+                            startIconUrl: '',
+                            endIconUrl: '',
                             shadowUrl: spotmapjsobj.url + 'leaflet-gpx/pin-shadow.png',
                         },
                         polyline_options: {
@@ -127,50 +162,52 @@ constructor(options) {
                         featureGroup: L.featureGroup([track])
                     };
                     self.layers.gpx[title].featureGroup.addTo(self.map)
-                    self.layerControl.addOverlay(self.layers.gpx[title].featureGroup,title + html);
-                    
+                    self.layerControl.addOverlay(self.layers.gpx[title].featureGroup, title + html);
+
                 }
+
+                //                info.update({'Distance': '1234 Nautical Miles', 'Time Total': '5 months 4 days', 'Time Moving': '20 days 10 hours'})
             }
             // add feeds to layercontrol
-            lodash.forEach(self.layers.feeds, function(value, key) {
+            lodash.forEach(self.layers.feeds, function (value, key) {
                 self.layers.feeds[key].featureGroup.addTo(self.map);
-                
-                if (self.layers.feeds.length + self.options.gpx.length == 1){
-                    self.layerControl.addOverlay(self.layers.feeds[key].featureGroup,key);
-                }
-                else {
-                    let color = self.getOption('color', { 'feed': key })
+
+                if (self.layers.feeds.length + self.options.gpx.length == 1) {
+                    self.layerControl.addOverlay(self.layers.feeds[key].featureGroup, key);
+                } else {
+                    let color = self.getOption('color', {
+                        'feed': key
+                    })
                     let label = key + ' ' + self.getColorDot(color)
                     // if last element and overlays exists
-                        // label += '<div class="leaflet-control-layers-separator"></div>'
+                    // label += '<div class="leaflet-control-layers-separator"></div>'
                     self.layerControl.addOverlay(self.layers.feeds[key].featureGroup, label)
                 }
 
             });
-            if(response.empty && self.options.gpx.length == 0){
+            if (response.empty && self.options.gpx.length == 0) {
                 self.map.setView([51.505, -0.09], 13)
                 var popup = L.popup()
                     .setLatLng([51.513, -0.09])
                     .setContent("There is nothing to show here yet.")
                     .openOn(self.map);
-            }
-            else {
+            } else {
                 self.setBounds(self.options.mapcenter);
             }
-            
+
             // TODO merge displayOverlays
             self.getOption('mapOverlays');
-            
+
             // if (Object.keys(displayOverlays).length == 1) {
-                // displayOverlays[Object.keys(displayOverlays)[0]].addTo(self.map);
-                // if (Object.keys(baseLayers).length > 1)
-                    // L.control.layers(baseLayers,{},{hideSingleBase: true}).addTo(self.map);
+            // displayOverlays[Object.keys(displayOverlays)[0]].addTo(self.map);
+            // if (Object.keys(baseLayers).length > 1)
+            // L.control.layers(baseLayers,{},{hideSingleBase: true}).addTo(self.map);
             // } else {
-                // L.control.layers(baseLayers, displayOverlays,{hideSingleBase: true}).addTo(self.map);
-                // self.layerControl.addOverlay(self.layers.feeds[key].featureGroup, label)
+            // L.control.layers(baseLayers, displayOverlays,{hideSingleBase: true}).addTo(self.map);
+            // self.layerControl.addOverlay(self.layers.feeds[key].featureGroup, label)
             // }
             // self.map.on('baselayerchange', self.onBaseLayerChange(event));
-            
+
             if (self.options.autoReload == true && !response.empty) {
                 var refresh = setInterval(function () {
                     body.groupBy = 'feed_name';
@@ -184,8 +221,9 @@ constructor(options) {
                             let lastPoint = lodash.last(self.layers.feeds[feedName].points)
                             if (lastPoint.unixtime < entry.unixtime) {
                                 self.debug("Found a new point for Feed: " + feedName);
-                                self.addPoint(entry, index);
+                                self.addPoint(entry, self.points.length + index);
                                 self.addPointToLine(entry);
+                                self.points.push(entry);
 
                                 if (self.options.mapcenter == 'last') {
                                     self.map.setView([entry.latitude, entry.longitude], 14);
@@ -193,10 +231,16 @@ constructor(options) {
                             }
                         });
 
-                    }, { body: body, filter: self.options.filterPoints });
+                    }, {
+                        body: body,
+                        filter: self.options.filterPoints
+                    });
                 }, 30000);
             }
-        }, { body: body, filter: this.options.filterPoints });
+        }, {
+            body: body,
+            filter: this.options.filterPoints
+        });
     }
 
     getOption(option, config) {
@@ -223,7 +267,7 @@ constructor(options) {
                     //     this.layerControl.addBaseLayer(layer, 'swissTopo');
                     //     L.Control.Layers.prototype._checkDisabledLayers = function () { };
                     // }
-                    if(firstmap && layer){
+                    if (firstmap && layer) {
                         firstmap = false;
                         layer.addTo(this.map);
                     }
@@ -239,7 +283,7 @@ constructor(options) {
 
 
         if (option == 'mapOverlays') {
-            
+
             if (this.options.mapOverlays) {
                 for (let overlayName in this.options.mapOverlays) {
                     overlayName = this.options.mapOverlays[overlayName];
@@ -256,7 +300,8 @@ constructor(options) {
                     }
 
                 }
-        }}
+            }
+        }
         if (option == 'color' && config.feed) {
             if (this.options.styles[config.feed] && this.options.styles[config.feed].color)
                 return this.options.styles[config.feed].color;
@@ -295,10 +340,10 @@ constructor(options) {
         var self = this;
         jQuery.post(spotmapjsobj.ajaxUrl, options.body, function (response) {
             let feeds = true;
-            if(self.options.feeds && self.options.feeds.length == 0){
+            if (self.options.feeds && self.options.feeds.length == 0) {
                 feeds = false
             }
-            if(feeds && (response.error || response == 0)){
+            if (feeds && (response.error || response == 0)) {
                 self.debug("There was an error in the response");
                 self.debug(response);
                 self.map.setView([51.505, -0.09], 13);
@@ -312,8 +357,7 @@ constructor(options) {
                         .openOn(self.map);
                     self.map.setView([51.5, 0], 13);
                 }
-            }
-            else if(feeds && options.filter && !response.empty){
+            } else if (feeds && options.filter && !response.empty) {
                 response = self.removeClosePoints(response, options.filter);
                 callback(response);
             } else {
@@ -322,7 +366,7 @@ constructor(options) {
         });
     }
 
-    removeClosePoints(points, radius){
+    removeClosePoints(points, radius) {
         points = lodash.eachRight(points, function (element, index) {
             // if we spliced the array, or check the last element, do nothing
             if (!element || index == 0)
@@ -337,7 +381,10 @@ constructor(options) {
                     continue;
                 }
                 if (indexesToBeDeleted.length != 0) {
-                    points[index].hiddenPoints = { count: indexesToBeDeleted.length, radius: radius };
+                    points[index].hiddenPoints = {
+                        count: indexesToBeDeleted.length,
+                        radius: radius
+                    };
                 }
                 break;
             }
@@ -355,7 +402,9 @@ constructor(options) {
     addButtons() {
         // zoom to bounds btn 
         var self = this;
-        let zoomOptions = { duration: 2 };
+        let zoomOptions = {
+            duration: 2
+        };
         let last = L.easyButton({
             states: [{
                 stateName: 'all',
@@ -387,17 +436,50 @@ constructor(options) {
             }]
         });
         //   the users position
-        let position = L.easyButton({states: [{
-            icon: 'fa-location-arrow',
-            title: 'Jump to your location',
-            onClick: function () {
-                self.map.locate({ setView: true, maxZoom: 15 });
-            },
-        }]});
+        let position = L.easyButton({
+            states: [{
+                icon: 'fa-location-arrow',
+                title: 'Jump to your location',
+                onClick: function () {
+                    self.map.locate({
+                        setView: true,
+                        maxZoom: 15
+                    });
+                },
+            }]
+        });
+        let strava = L.easyButton({
+            states: [{
+                icon: 'fa-bicycle',
+                title: 'Show Strava Tracks',
+                onClick: function () {
+                    self.loadStrava();
+                },
+            }],
+        });
         // add all btns to map
-        L.easyBar([last, position]).addTo(this.map);
+        L.easyBar([last, position, strava]).addTo(this.map);
     }
-    
+    loadStrava() {
+        const stravaApiUrl = 'https://www.strava.com/api/v3/activities/10248558791';
+        const accessToken = 'fc7dd583e5c7031e3498c5ebfddeed019ee56837';
+        fetch(stravaApiUrl, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            })
+            .then(response => response.json())
+            .then(activity => {
+                if (activity && activity.map && activity.map.summary_polyline) {
+                    const decodedPolyline = L.Polyline.fromEncoded(activity.map.summary_polyline).getLatLngs();
+                    const polylineLayer = L.polyline(decodedPolyline, {
+                        color: 'blue'
+                    }).addTo(this.map);
+                    this.map.fitBounds(polylineLayer.getBounds());
+                }
+            })
+            .catch(error => console.error('Error fetching Strava data:', error));
+    }
     // onBaseLayerChange(layer) {
     //     // let bounds = this.map.getBounds();
     //     let center = this.map.getCenter();
@@ -417,7 +499,7 @@ constructor(options) {
     //     zoom = this.map.getZoom();
     //     // this.map.options.zoomSnap = 1;
     // }
-    
+
     initTable(id) {
         // define obj to post data
         var body = {
@@ -436,7 +518,9 @@ constructor(options) {
         this.getPoints(function (response) {
             let headerElements = ["Type", "Message", "Time"];
             let hasLocaltime = false;
-            if (lodash.find(response, function (o) { return o.local_timezone; })) {
+            if (lodash.find(response, function (o) {
+                    return o.local_timezone;
+                })) {
                 headerElements.push("Local Time");
                 hasLocaltime = true;
             }
@@ -474,7 +558,9 @@ constructor(options) {
                             table.empty();
                             let headerElements = ["Type", "Message", "Time"];
                             let hasLocaltime = false;
-                            if (lodash.find(response, function (o) { return o.local_timezone; })) {
+                            if (lodash.find(response, function (o) {
+                                    return o.local_timezone;
+                                })) {
                                 headerElements.push("Local Time");
                                 hasLocaltime = true;
                             }
@@ -501,13 +587,19 @@ constructor(options) {
                             self.debug('same response!');
                         }
 
-                    }, { body: body, filter: self.options.filterPoints });
+                    }, {
+                        body: body,
+                        filter: self.options.filterPoints
+                    });
                 }, 10000);
             }
-        }, { body: body, filter: this.options.filterPoints });
+        }, {
+            body: body,
+            filter: this.options.filterPoints
+        });
     }
 
-    getColorDot(color){
+    getColorDot(color) {
         return '<span class="dot" style="position: relative;height: 10px;width: 10px;background-color: ' + color + ';border-radius: 50%;display: inline-block;"></span>'
     }
     formatSpeed(speed1, speed2 = null, decimals = 1) {
@@ -555,7 +647,7 @@ constructor(options) {
     }
     formatTemperature(kelvin, decimals = 1) {
         const convertToCelsius = (temperature) => +temperature - 273.15;
-        const convertToFahrenheit = (temperature) => (+temperature * 9/5) - 459.67;
+        const convertToFahrenheit = (temperature) => (+temperature * 9 / 5) - 459.67;
         switch (this.tempUnit.toUpperCase()) {
             case 'C':
                 return `${convertToCelsius(kelvin).toFixed(decimals)}°C`;
@@ -624,47 +716,52 @@ constructor(options) {
         const secondLatestPoint = this.points[index - 1];
         const timeDiff = latestPoint.unixtime - secondLatestPoint.unixtime;
         const distance = this.calculateDistance(
-          latestPoint.latitude,
-          latestPoint.longitude,
-          secondLatestPoint.latitude,
-          secondLatestPoint.longitude
+            latestPoint.latitude,
+            latestPoint.longitude,
+            secondLatestPoint.latitude,
+            secondLatestPoint.longitude
         );
         return timeDiff > 0 ? distance / timeDiff : 0;
     }
-    calculateSpeed(index, timeWindowSeconds){
+    calculateSpeed(index, timeWindowSeconds) {
         const timeDistance = this.calculateTimeDistance(index, timeWindowSeconds);
         return timeDistance.time <= 0 ? 0 : timeDistance.distance / timeDistance.time;
     }
     calculateTimeDistance(index, timeWindowSeconds) {
         if (!this.points || this.points.length < 2) {
-            return {distance: 0, time: timeWindowSeconds}; // should never happen
+            return {
+                distance: 0,
+                time: timeWindowSeconds
+            }; // should never happen
         }
         let currentPoint = this.points[index];
         const startTime = currentPoint.unixtime - timeWindowSeconds;
         let distanceSum = 0;
         let timeDiffSum = 0;
         for (let i = index - 1; i > 0; i--) {
-          const previousPoint = this.points[i];
-          if (previousPoint.unixtime < startTime && index - i > 1) {
-            break; // need at least 2 points
-          }
-          const distance = this.calculateDistance(
-            previousPoint.latitude,
-            previousPoint.longitude,
-            currentPoint.latitude,
-            currentPoint.longitude
-          );
-          const timeDiff = currentPoint.unixtime - previousPoint.unixtime;
-          distanceSum += distance;
-          timeDiffSum += timeDiff;
-          currentPoint = previousPoint;
+            const previousPoint = this.points[i];
+            if (previousPoint.unixtime < startTime && index - i > 1) {
+                break; // need at least 2 points
+            }
+            const distance = this.calculateDistance(
+                previousPoint.latitude,
+                previousPoint.longitude,
+                currentPoint.latitude,
+                currentPoint.longitude
+            );
+            const timeDiff = currentPoint.unixtime - previousPoint.unixtime;
+            distanceSum += distance;
+            timeDiffSum += timeDiff;
+            currentPoint = previousPoint;
         }
-        return {distance: distanceSum, time: timeDiffSum};
+        return {
+            distance: distanceSum,
+            time: timeDiffSum
+        };
     }
-    getPopupText(entry, index){
+    getPopupText(entry, index) {
         let message = `<b>${entry.device_name}</b> - ${this.timeSince(+entry.unixtime)} ago</br>`;
-        if (entry.local_timezone && !(entry.localdate == entry.date && entry.localtime == entry.time))
-            message += '🕑 ' + entry.localtime + ' ' + entry.localdate + '</br>';
+        message += '🕑 ' + entry.localtime + ' ' + entry.localdate + '</br>';
         if (entry.message && entry.type == 'MEDIA')
             message += '<img width="180"  src="' + entry.message + '" class="attachment-thumbnail size-thumbnail" alt="" decoding="async" loading="lazy" /></br>';
         else if (entry.message)
@@ -690,8 +787,8 @@ constructor(options) {
         }
         return message;
     }
-    setNewFeedLayer(feedName){
-        if(this.doesFeedExists(feedName)){
+    setNewFeedLayer(feedName) {
+        if (this.doesFeedExists(feedName)) {
             return false;
         }
         this.layers.feeds[feedName] = {
@@ -704,24 +801,29 @@ constructor(options) {
         return true;
     }
 
-    addPoint(point, index){
+    addPoint(point, index) {
         let feedName = point.feed_name;
         let coordinates = [point.latitude, point.longitude];
-        if(!this.doesFeedExists(feedName)){
+        if (!this.doesFeedExists(feedName)) {
             this.setNewFeedLayer(feedName);
         }
-        
+
         // this.getOption('lastPoint')
-        
-        let markerOptions= this.getMarkerOptions(point)
-            let marker = L.marker(coordinates , {...markerOptions, owner: this, point, index});
-            marker.on('click', function(e) {
-                const options = e.target.options;
-                const message = options.owner.getPopupText(options.point, options.index);
-                if (e.target.getPopup()) e.target.unbindPopup();
-                e.target.bindPopup(message).openPopup();
-            })
-        
+
+        let markerOptions = this.getMarkerOptions(point)
+        let marker = L.marker(coordinates, {
+            ...markerOptions,
+            owner: this,
+            point,
+            index
+        });
+        marker.on('click', function (e) {
+            const options = e.target.options;
+            const message = options.owner.getPopupText(options.point, options.index);
+            if (e.target.getPopup()) e.target.unbindPopup();
+            e.target.bindPopup(message).openPopup();
+        })
+
         this.layers.feeds[feedName].points.push(point);
         this.layers.feeds[feedName].markers.push(marker);
         this.layers.feeds[feedName].featureGroup.addLayer(marker)
@@ -734,17 +836,17 @@ constructor(options) {
             self.map.setView(coordinates, 14)
         });
     }
-    
-    getMarkerOptions(point){
+
+    getMarkerOptions(point) {
         let zIndexOffset = 0;
-        if(!lodash.includes(['UNLIMITED-TRACK', 'EXTREME-TRACK', 'TRACK'], point.type)){
+        if (!lodash.includes(['UNLIMITED-TRACK', 'EXTREME-TRACK', 'TRACK'], point.type)) {
             zIndexOffset += 1000;
-        } else if(!lodash.includes(['CUSTOM', 'OK'], point.type)){
+        } else if (!lodash.includes(['CUSTOM', 'OK'], point.type)) {
             zIndexOffset -= 2000;
-        } else if(!lodash.includes(['HELP', 'HELP-CANCEL',], point.type)){
+        } else if (!lodash.includes(['HELP', 'HELP-CANCEL', ], point.type)) {
             zIndexOffset -= 3000;
         }
-        
+
         let markerOptions = {
             icon: this.getMarkerIcon(point),
             zIndexOffset: zIndexOffset,
@@ -752,27 +854,29 @@ constructor(options) {
 
         return markerOptions;
     }
-    getMarkerIcon(point){
-        let color = point.color ? point.color : this.getOption('color', { 'feed': point.feed_name });
+    getMarkerIcon(point) {
+        let color = point.color ? point.color : this.getOption('color', {
+            'feed': point.feed_name
+        });
         let iconOptions = {
             textColor: color,
             borderColor: color,
         }
-        
-        if(lodash.includes(['UNLIMITED-TRACK', 'EXTREME-TRACK', 'TRACK'], point.type)){
+
+        if (lodash.includes(['UNLIMITED-TRACK', 'EXTREME-TRACK', 'TRACK'], point.type)) {
             iconOptions.iconShape = spotmapjsobj.marker["UNLIMITED-TRACK"].iconShape;
             iconOptions.icon = spotmapjsobj.marker["UNLIMITED-TRACK"].icon;
-            iconOptions.iconAnchor= [4,4];
-            iconOptions.iconSize= [8,8];
+            iconOptions.iconAnchor = [4, 4];
+            iconOptions.iconSize = [8, 8];
             iconOptions.borderWith = 8;
         }
         // Is the point.type configured?
-        if(spotmapjsobj.marker[point.type]){
+        if (spotmapjsobj.marker[point.type]) {
             iconOptions.iconShape = spotmapjsobj.marker[point.type].iconShape;
             iconOptions.icon = spotmapjsobj.marker[point.type].icon;
-            if(iconOptions.iconShape == 'circle-dot'){
-                iconOptions.iconAnchor= [4,4];
-                iconOptions.iconSize= [8,8];
+            if (iconOptions.iconShape == 'circle-dot') {
+                iconOptions.iconAnchor = [4, 4];
+                iconOptions.iconSize = [8, 8];
                 iconOptions.borderWith = 8;
             }
         } else {
@@ -781,36 +885,38 @@ constructor(options) {
         }
         return L.BeautifyIcon.icon(iconOptions)
     }
-    addPointToLine(point){
+    addPointToLine(point) {
         let feedName = point.feed_name;
         if (feedName == 'media')
             return
         let coordinates = [point.latitude, point.longitude];
-        let splitLines = this.getOption('splitLines', { 'feed': feedName });
-        if(!splitLines){
+        let splitLines = this.getOption('splitLines', {
+            'feed': feedName
+        });
+        if (!splitLines) {
             return false;
         }
         let numberOfPointsAddedToMap = this.layers.feeds[feedName].points.length;
         let lastPoint;
-        if(numberOfPointsAddedToMap == 2){
+        if (numberOfPointsAddedToMap == 2) {
             //  TODO
-            lastPoint = this.layers.feeds[feedName].points[ numberOfPointsAddedToMap - 1 ];
+            lastPoint = this.layers.feeds[feedName].points[numberOfPointsAddedToMap - 1];
             // compare with given point if it's the same exit
         }
-        if(numberOfPointsAddedToMap >= 2){
-            lastPoint = this.layers.feeds[feedName].points[ numberOfPointsAddedToMap - 2 ];
+        if (numberOfPointsAddedToMap >= 2) {
+            lastPoint = this.layers.feeds[feedName].points[numberOfPointsAddedToMap - 2];
         }
         let length = this.layers.feeds[feedName].lines.length;
-        if(lastPoint && point.unixtime - lastPoint.unixtime >= splitLines * 60 * 60){
+        if (lastPoint && point.unixtime - lastPoint.unixtime >= splitLines * 60 * 60) {
             // start new line and add to map
             let line = this.addNewLine(feedName);
             line.addLatLng(coordinates);
             this.layers.feeds[feedName].lines.push(line)
             this.layers.feeds[feedName].featureGroup.addLayer(line);
         } else {
-            this.layers.feeds[feedName].lines[length-1].addLatLng(coordinates);
+            this.layers.feeds[feedName].lines[length - 1].addLatLng(coordinates);
         }
-        
+
         return true;
     }
     /**
@@ -818,13 +924,17 @@ constructor(options) {
      * @param {string} feedName 
      * @returns {L.polyline} line 
      */
-    addNewLine(feedName){
-        let color = this.getOption('color', { 'feed': feedName });
-        let line = L.polyline([],{ color: color });
-        
+    addNewLine(feedName) {
+        let color = this.getOption('color', {
+            'feed': feedName
+        });
+        let line = L.polyline([], {
+            color: color
+        });
+
         line.setText('  \u25BA  ', {
             repeat: true,
-            offset: 2, 
+            offset: 2,
             attributes: {
                 'fill': 'black',
                 'font-size': 7
@@ -837,7 +947,7 @@ constructor(options) {
      * 
      * @param {string} option
      */
-    setBounds(option){
+    setBounds(option) {
         this.map.fitBounds(this.getBounds(option));
     }
     /**
@@ -845,22 +955,22 @@ constructor(options) {
      * @param {string} option - all,last,last-trip,gpx
      * @returns {L.latLngBounds}
      */
-    getBounds(option){        
+    getBounds(option) {
         let bounds = L.latLngBounds();
-        let coordinates =[];
+        let coordinates = [];
         var self = this;
         let latestPoint;
-        if(option == "last" || option == "last-trip"){
+        if (option == "last" || option == "last-trip") {
             let unixtime = 0;
-            lodash.forEach(self.layers.feeds, function(value, feedName) {
+            lodash.forEach(self.layers.feeds, function (value, feedName) {
                 let point = lodash.last(self.layers.feeds[feedName].points);
-                
-                if( point.unixtime > unixtime){
+
+                if (point.unixtime > unixtime) {
                     latestPoint = lodash.last(self.layers.feeds[feedName].points);
                 }
             });
-            bounds.extend( [latestPoint.latitude, latestPoint.longitude]);
-            if(option == "last"){
+            bounds.extend([latestPoint.latitude, latestPoint.longitude]);
+            if (option == "last") {
                 return bounds;
             }
             // get bounds for last-trip 
@@ -870,27 +980,27 @@ constructor(options) {
 
         let feedBounds = L.latLngBounds();
         var self = this;
-        lodash.forEach(self.layers.feeds, function(value, feedName) {
+        lodash.forEach(self.layers.feeds, function (value, feedName) {
             let layerBounds = self.layers.feeds[feedName].featureGroup.getBounds();
             feedBounds.extend(layerBounds);
         });
-        if(option == "feeds"){
+        if (option == "feeds") {
             return feedBounds;
         }
         let gpxBounds = L.latLngBounds();
-        lodash.forEach(self.layers.gpx, function(value, key) {
+        lodash.forEach(self.layers.gpx, function (value, key) {
             let layerBounds = self.layers.gpx[key].featureGroup.getBounds();
             gpxBounds.extend(layerBounds);
-            
+
         });
-        if(option == "gpx"){
+        if (option == "gpx") {
             return gpxBounds;
         }
-        if(option == "all"){
+        if (option == "all") {
             bounds.extend(gpxBounds);
             bounds.extend(feedBounds);
             return bounds;
         }
-        
+
     }
 }
