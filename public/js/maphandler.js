@@ -714,8 +714,13 @@ constructor(options) {
         // this.getOption('lastPoint')
         
         let markerOptions= this.getMarkerOptions(point)
-        let message = this.getPopupText(point, index);
-        let marker = L.marker(coordinates , markerOptions).bindPopup(message);
+            let marker = L.marker(coordinates , {...markerOptions, owner: this, point, index});
+            marker.on('click', function(e) {
+                const options = e.target.options;
+                const message = options.owner.getPopupText(options.point, options.index);
+                if (e.target.getPopup()) e.target.unbindPopup();
+                e.target.bindPopup(message).openPopup();
+            })
         
         this.layers.feeds[feedName].points.push(point);
         this.layers.feeds[feedName].markers.push(marker);
