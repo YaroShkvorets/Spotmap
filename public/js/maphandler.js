@@ -19,6 +19,9 @@ class Spotmap {
             feeds: {},
             gpx: {},
         };
+        this.totalDistance = 0;
+        this.totalSeconds = 0;
+        this.totalMovingSeconds = 0;
     }
 
     doesFeedExists(feedName) {
@@ -68,9 +71,10 @@ class Spotmap {
 
         info.update = function (props) {
             const contents = Object.entries(props).map(value => `<b>${value[0]}</b>: ${value[1]}`).join('<br/>');
-            this._div.innerHTML = `<h4>Under Sail</h4>${contents}`;
+            // this._div.innerHTML = `<h4>Under Sail</h4>${contents}`;
+            this._div.innerHTML = `${contents}`;
         };
-        // info.addTo(this.map);
+        info.addTo(this.map);
 
         self.getOption('maps');
         this.addButtons();
@@ -165,8 +169,8 @@ class Spotmap {
                     self.layerControl.addOverlay(self.layers.gpx[title].featureGroup, title + html);
 
                 }
-
-                //                info.update({'Distance': '1234 Nautical Miles', 'Time Total': '5 months 4 days', 'Time Moving': '20 days 10 hours'})
+                self.calculateTrip();
+                info.update({'Distance': self.formatDistance(self.totalDistance), 'Time Sailing': self.formatDuration(self.totalMovingSeconds), 'Time Total': self.formatDuration(self.totalSeconds)})
             }
             // add feeds to layercontrol
             lodash.forEach(self.layers.feeds, function (value, key) {
@@ -224,6 +228,7 @@ class Spotmap {
                                 self.addPoint(entry, self.points.length + index);
                                 self.addPointToLine(entry);
                                 self.points.push(entry);
+                                self.calculateTrip();
 
                                 if (self.options.mapcenter == 'last') {
                                     self.map.setView([entry.latitude, entry.longitude], 14);
@@ -638,6 +643,22 @@ class Spotmap {
                 return 'Invalid unit';
         }
     }
+    formatDuration(seconds) {
+        if (!seconds) return "now";
+
+        const years = Math.floor(seconds / (365 * 24 * 60 * 60));
+        const months = Math.floor((seconds % (365 * 24 * 60 * 60)) / (30 * 24 * 60 * 60));
+        const weeks = Math.floor((seconds % (30 * 24 * 60 * 60)) / (7 * 24 * 60 * 60));
+        const days = Math.floor((seconds % (7 * 24 * 60 * 60)) / (24 * 60 * 60));
+
+        const durationArray = [];
+        if (years > 0) durationArray.push(years === 1 ? "1 year" : `${years} years`);
+        if (months > 0) durationArray.push(months === 1 ? "1 month" : `${months} months`);
+        if (weeks > 0) durationArray.push(weeks === 1 ? "1 week" : `${weeks} weeks`);
+        if (days > 0) durationArray.push(days === 1 ? "1 day" : `${days} days`);
+
+        return durationArray.join(" ");
+    }
     getWindDirection(degrees) {
         const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
         const letterDirections = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
@@ -709,6 +730,28 @@ class Spotmap {
     }
     toRadians(degrees) {
         return degrees * (Math.PI / 180);
+    }
+    calculateTrip() {
+        if (!this.points || this.points.length < 2) return;
+        let lastPoint = this.points[0];
+        this.totalDistance = 0;
+        this.totalMovingSeconds = 0;
+        for (var i = 1; i < this.points.length; i++) {
+            let point = this.points[i];
+            this.totalDistance += this.calculateDistance(
+                point.latitude,
+                point.longitude,
+                lastPoint.latitude,
+                lastPoint.longitude
+            );
+            const seconds = point.unixtime - lastPoint.unixtime;
+            // only count as moving if short time between points
+            if (seconds < 2 * 60 * 60){
+                this.totalMovingSeconds += seconds;
+            }
+            lastPoint = point;
+        }
+        this.totalSeconds = this.points[this.points.length - 1].unixtime - this.points[0].unixtime;
     }
     calculateInstantSpeed(index = 0) {
         if (!this.points || this.points.length < 2 || index === 0) return 0;
