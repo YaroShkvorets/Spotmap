@@ -51,7 +51,7 @@ class Spotmap {
             attributionControl: false,
         };
         this.map = L.map(this.options.mapId, mapOptions);
-        L.control.scale().addTo(this.map);
+        L.control.scale({ imperial: false }).addTo(this.map);
         // use no prefix in attribution
         L.control.attribution({
             prefix: ''
@@ -84,8 +84,13 @@ class Spotmap {
             lengthUnit: {
                 factor: 0.539956803, //  from km to nm
                 display: 'Nautical Miles',
+                speedDisplay: 'kn',
                 decimal: 2,
                 label: 'Distance:'
+            },
+            timeSpeed: {
+              values: [4],
+              label: 'Time',
             },
             circleMarker: { // Leaflet circle marker options for points used in this plugin
                 color: 'black',
@@ -94,7 +99,7 @@ class Spotmap {
             lineStyle: { // Leaflet polyline options for lines used in this plugin
                 color: 'black',
                 dashArray: '1,6'
-            },
+            }
         };
         L.control.ruler(rulerOptions).addTo(this.map);
 
@@ -170,7 +175,7 @@ class Spotmap {
 
                 }
                 self.calculateTrip();
-                info.update({'Distance': self.formatDistance(self.totalDistance), 'Time Sailing': self.formatDuration(self.totalMovingSeconds), 'Time Total': self.formatDuration(self.totalSeconds)})
+                info.update({'Distance': self.formatDistance(self.totalDistance), 'Moving': self.formatDuration(self.totalMovingSeconds), 'Elapsed': self.formatDuration(self.totalSeconds)})
             }
             // add feeds to layercontrol
             lodash.forEach(self.layers.feeds, function (value, key) {
@@ -187,7 +192,6 @@ class Spotmap {
                     // label += '<div class="leaflet-control-layers-separator"></div>'
                     self.layerControl.addOverlay(self.layers.feeds[key].featureGroup, label)
                 }
-
             });
             if (response.empty && self.options.gpx.length == 0) {
                 self.map.setView([51.505, -0.09], 13)
@@ -657,7 +661,7 @@ class Spotmap {
         if (weeks > 0) durationArray.push(weeks === 1 ? "1 week" : `${weeks} weeks`);
         if (days > 0) durationArray.push(days === 1 ? "1 day" : `${days} days`);
 
-        return durationArray.join(" ");
+        return durationArray.slice(0, 2).join(" ");
     }
     getWindDirection(degrees) {
         const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];

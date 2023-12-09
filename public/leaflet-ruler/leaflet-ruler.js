@@ -13,16 +13,17 @@
   L.Control.Ruler = L.Control.extend({
     options: {
       position: 'topright',
-      circleMarker: {               // Leaflet circle marker options for points used in this plugin
-        color: 'black',
-        radius: 1
+      circleMarker: {
+        color: 'red',
+        radius: 2
       },
-      lineStyle: {                  // Leaflet polyline options for lines used in this plugin
-        color: 'black',
+      lineStyle: {
+        color: 'red',
         dashArray: '1,6'
       },
       lengthUnit: {
         display: 'km',
+        speedDisplay: 'km/h',
         decimal: 2,
         factor: null,
         label: 'Distance:'
@@ -32,6 +33,10 @@
         decimal: 2,
         factor: null,
         label: 'Bearing:'
+      },
+      timeSpeed: {
+        values: [5],
+        label: 'Time',
       }
     },
     onAdd: function(map) {
@@ -88,14 +93,12 @@
         if (this._movingLatLong){
           L.polyline([this._clickedPoints[this._clickCount-1], this._movingLatLong], this.options.lineStyle).addTo(this._polylineLayer);
         }
-        var text;
         this._totalLength += this._result.Distance;
-        if (this._clickCount > 1){
-          text = '<b>' + this.options.angleUnit.label + '</b>&nbsp;' + this._result.Bearing.toFixed(this.options.angleUnit.decimal) + '&nbsp;' + this.options.angleUnit.display + '<br><b>' + this.options.lengthUnit.label + '</b>&nbsp;' + this._totalLength.toFixed(this.options.lengthUnit.decimal) + '&nbsp;' +  this.options.lengthUnit.display;
-        }
-        else {
-          text = '<b>' + this.options.angleUnit.label + '</b>&nbsp;' + this._result.Bearing.toFixed(this.options.angleUnit.decimal) + '&nbsp;' + this.options.angleUnit.display + '<br><b>' + this.options.lengthUnit.label + '</b>&nbsp;' + this._result.Distance.toFixed(this.options.lengthUnit.decimal) + '&nbsp;' +  this.options.lengthUnit.display;
-        }
+        const distance = this._clickCount > 1 ? this._totalLength : this._result.Distance;
+        const text = `<b>${this.options.angleUnit.label}</b>&nbsp;${this._result.Bearing.toFixed(this.options.angleUnit.decimal)}&nbsp;${this.options.angleUnit.display}<br>
+                <b>${this.options.lengthUnit.label}</b>&nbsp;${distance.toFixed(this.options.lengthUnit.decimal)}&nbsp;${this.options.lengthUnit.display}<br>
+                ${this.options.timeSpeed.values.map(speed => `<b>${this.options.timeSpeed.label} @ ${speed} ${this.options.lengthUnit.speedDisplay}:</b>&nbsp;${this._formatDuration(distance / speed)}`).join("<br>")}`;
+
         L.circleMarker(this._clickedLatLong, this.options.circleMarker).bindTooltip(text, {permanent: true, className: 'result-tooltip'}).addTo(this._pointLayer).openTooltip();
         this._calculateBearingAndDistance();
       }
@@ -166,7 +169,30 @@
       this._choice = false;
       L.DomEvent.on(this._container, 'click', this._toggleMeasure, this);
       this._toggleMeasure();
+    },
+    _formatDuration: function(hours_){
+      if (!hours_) return "now";
+
+      const years = Math.floor(hours_ / (365 * 24));
+      const months = Math.floor((hours_ % (365 * 24)) / (30 * 24));
+      const weeks = Math.floor((hours_ % (30 * 24)) / (7 * 24));
+      const days = Math.floor((hours_ % (7 * 24)) / (24));
+      const hours = Math.floor(hours_ % 24);
+      const minutes = Math.floor((hours_ % 1) * 60);
+      const seconds = Math.floor(((hours_ % 1) * 60) % 1 * 60);
+
+      const durationArray = [];
+      if (years > 0) durationArray.push(years === 1 ? "1 year" : `${years} years`);
+      if (months > 0) durationArray.push(months === 1 ? "1 month" : `${months} months`);
+      if (weeks > 0) durationArray.push(weeks === 1 ? "1 week" : `${weeks} weeks`);
+      if (days > 0) durationArray.push(days === 1 ? "1 day" : `${days} days`);
+      if (hours > 0) durationArray.push(hours === 1 ? "1 hour" : `${hours} hours`);
+      if (minutes > 0) durationArray.push(minutes === 1 ? "1 minute" : `${minutes} minutes`);
+      if (seconds > 0) durationArray.push(seconds === 1 ? "1 second" : `${seconds} seconds`);
+
+      return durationArray.slice(0, 2).join(" ");
     }
+
   });
   L.control.ruler = function(options) {
     return new L.Control.Ruler(options);

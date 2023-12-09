@@ -163,7 +163,7 @@
       "label": "Watercolor",
       "url": "https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg",
       "options": {
-        "attribution": "Map tiles by <a href='http://stamen.com'>Stamen Design</a>, <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a> &mdash; Map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+        "attribution": "Map tiles by <a href='http://stamen.com'>Stamen Design</a>, <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a> &mdash; Map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
         "subdomains": "abcd",
         "minZoom": "1",
         "maxZoom": "16"
@@ -173,7 +173,7 @@
       "label": "Stamen Terrain",
       "url": "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png",
       "options": {
-        "attribution": "Map tiles by <a href='http://stamen.com'>Stamen Design</a>, <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a> &mdash; Map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+        "attribution": "Map tiles by <a href='http://stamen.com'>Stamen Design</a>, <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a> &mdash; Map data &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
         "maxZoom": "20"
       }
     },
@@ -268,7 +268,7 @@
       "label": "OpenSeaMap Seamarks",
       "url": "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png",
       "options": {
-        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenSeaMap</a> contributors"
+        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenSeaMap</a>"
       }
     },
     "openseamap-depth": {
@@ -281,7 +281,7 @@
         "transparent": "true",
         "maxZoom": 20,
         "continuousWorld": "true",
-        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenSeaMap</a> contributors"
+        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenSeaMap</a>"
       }
     },
     "openweathermap-percipitation": {
@@ -290,7 +290,7 @@
       "options": {
         "layer": "precipitation",
         "openweathermapToken": "",
-        "attribution": "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+        "attribution": ""
       }
     }
   }
