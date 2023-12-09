@@ -304,7 +304,7 @@ class Spotmap {
                         } else {
                             layer = L.tileLayer(overlay.url, overlay.options);
                         }
-                        layer.addTo(this.map);
+                        if (overlay.enabled) layer.addTo( this.map );
                         this.layerControl.addOverlay(layer, overlay.label);
                     }
 
@@ -489,125 +489,6 @@ class Spotmap {
             })
             .catch(error => console.error('Error fetching Strava data:', error));
     }
-    // onBaseLayerChange(layer) {
-    //     // let bounds = this.map.getBounds();
-    //     let center = this.map.getCenter();
-    //     let zoom = this.map.getZoom();
-    //     // console.log(this.map.getZoom());
-
-    //     if (lodash.startsWith(layer.name, "swiss") && this.map.options.crs.code == "EPSG:3857") {
-    //         this.changeCRS(L.CRS.EPSG2056)
-    //         this.map.setZoom(zoom + 7)
-    //     }
-    //     else if (!lodash.startsWith(layer.name, "swiss") && this.map.options.crs.code == "EPSG:2056") {
-    //         this.changeCRS(L.CRS.EPSG3857)
-    //         this.map.setZoom(zoom - 7)
-    //     }
-    //     // this.map.options.zoomSnap = 0;
-    //     this.map._resetView(center, zoom, true);
-    //     zoom = this.map.getZoom();
-    //     // this.map.options.zoomSnap = 1;
-    // }
-
-    initTable(id) {
-        // define obj to post data
-        var body = {
-            'action': 'get_positions',
-            'date-range': this.options.dateRange,
-            'type': this.options.type,
-            'date': this.options.date,
-            'orderBy': this.options.orderBy,
-            'limit': this.options.limit,
-            'groupBy': this.options.groupBy,
-        }
-        if (this.options.feeds) {
-            body.feeds = this.options.feeds;
-        }
-        var self = this;
-        this.getPoints(function (response) {
-            let headerElements = ["Type", "Message", "Time"];
-            let hasLocaltime = false;
-            if (lodash.find(response, function (o) {
-                    return o.local_timezone;
-                })) {
-                headerElements.push("Local Time");
-                hasLocaltime = true;
-            }
-            var table = jQuery('#' + id);
-            let row = '<tr>';
-            lodash.each(headerElements, function (element) {
-                row += '<th>' + element + '</th>'
-            })
-            row += '<tr>'
-            table.append(jQuery(row));
-            if (response.error == true) {
-                self.options.autoReload = false;
-                table.append(jQuery("<tr><td></td><td>No data found</td><td></td></tr>"))
-                return;
-            } else
-                lodash.forEach(response, function (entry) {
-                    if (!entry.local_timezone) {
-                        entry.localdate = '';
-                        entry.localtime = '';
-                    }
-                    if (!entry.message)
-                        entry.message = '';
-                    let row = "<tr class='spotmap " + entry.type + "'><td id='spotmap_" + entry.id + "'>" + entry.type + "</td><td>" + entry.message + "</td><td>" + entry.time + "<br>" + entry.date + "</td>";
-                    if (hasLocaltime)
-                        row += "<td>" + entry.localtime + "<br>" + entry.localdate + "</td>";
-                    row += "</tr>";
-                    table.append(jQuery(row))
-                });
-            if (self.options.autoReload == true) {
-                var oldResponse = response;
-                var refresh = setInterval(function () {
-                    self.getPoints(function (response) {
-                        if (lodash.head(oldResponse).unixtime < lodash.head(response).unixtime) {
-                            var table = jQuery('#' + id);
-                            table.empty();
-                            let headerElements = ["Type", "Message", "Time"];
-                            let hasLocaltime = false;
-                            if (lodash.find(response, function (o) {
-                                    return o.local_timezone;
-                                })) {
-                                headerElements.push("Local Time");
-                                hasLocaltime = true;
-                            }
-                            let row = '<tr>';
-                            lodash.each(headerElements, function (element) {
-                                row += '<th>' + element + '</th>'
-                            })
-                            row += '<tr>'
-                            table.append(jQuery(row));
-                            lodash.forEach(response, function (entry) {
-                                if (!entry.local_timezone) {
-                                    entry.localdate = '';
-                                    entry.localtime = '';
-                                }
-                                if (!entry.message)
-                                    entry.message = '';
-                                let row = "<tr class='spotmap " + entry.type + "'><td id='spotmap_" + entry.id + "'>" + entry.type + "</td><td>" + entry.message + "</td><td>" + entry.time + "<br>" + entry.date + "</td>";
-                                if (hasLocaltime)
-                                    row += "<td>" + entry.localtime + "<br>" + entry.localdate + "</td>";
-                                row += "</tr>";
-                                table.append(jQuery(row));
-                            });
-                        } else {
-                            self.debug('same response!');
-                        }
-
-                    }, {
-                        body: body,
-                        filter: self.options.filterPoints
-                    });
-                }, 10000);
-            }
-        }, {
-            body: body,
-            filter: this.options.filterPoints
-        });
-    }
-
     getColorDot(color) {
         return '<span class="dot" style="position: relative;height: 10px;width: 10px;background-color: ' + color + ';border-radius: 50%;display: inline-block;"></span>'
     }
@@ -649,12 +530,12 @@ class Spotmap {
     }
     formatDuration(seconds) {
         if (!seconds) return "now";
-
+      
         const years = Math.floor(seconds / (365 * 24 * 60 * 60));
         const months = Math.floor((seconds % (365 * 24 * 60 * 60)) / (30 * 24 * 60 * 60));
         const weeks = Math.floor((seconds % (30 * 24 * 60 * 60)) / (7 * 24 * 60 * 60));
         const days = Math.floor((seconds % (7 * 24 * 60 * 60)) / (24 * 60 * 60));
-
+      
         const durationArray = [];
         if (years > 0) durationArray.push(years === 1 ? "1 year" : `${years} years`);
         if (months > 0) durationArray.push(months === 1 ? "1 month" : `${months} months`);
