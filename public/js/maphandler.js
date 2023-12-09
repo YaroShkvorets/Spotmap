@@ -22,6 +22,7 @@ class Spotmap {
         this.totalDistance = 0;
         this.totalSeconds = 0;
         this.totalMovingSeconds = 0;
+        this.sailboat = null;
     }
 
     doesFeedExists(feedName) {
@@ -126,6 +127,13 @@ class Spotmap {
                     this.addPoint(entry, index);
                     this.addPointToLine(entry);
                 }, self);
+                let icon = L.icon({
+                    iconUrl: '/sailboat.png',
+                    iconSize: [36, 36], // size of the icon
+                });
+
+                let lastPoint = self.points[self.points.length - 1];
+                self.sailboat = L.marker(L.latLng(lastPoint.latitude, lastPoint.longitude), {interactive: false, icon: icon}).addTo(self.map);
 
             }
             if (self.options.gpx) {
@@ -236,6 +244,9 @@ class Spotmap {
 
                                 if (self.options.mapcenter == 'last') {
                                     self.map.setView([entry.latitude, entry.longitude], 14);
+                                }
+                                if (self.sailboat){
+                                    self.sailboat.setLatLng(L.latLng(entry.latitude, entry.longitude));
                                 }
                             }
                         });
