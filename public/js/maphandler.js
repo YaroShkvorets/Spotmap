@@ -128,8 +128,9 @@ class Spotmap {
                     this.addPointToLine(entry);
                 }, self);
                 let icon = L.icon({
-                    iconUrl: '/sailboat.png',
-                    iconSize: [36, 36], // size of the icon
+                    iconUrl: '/wp-content/uploads/2023/12/sailboat.png',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 25],
                 });
 
                 let lastPoint = self.points[self.points.length - 1];
@@ -250,7 +251,6 @@ class Spotmap {
                                 }
                             }
                         });
-
                     }, {
                         body: body,
                         filter: self.options.filterPoints
