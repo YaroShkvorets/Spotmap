@@ -90,8 +90,8 @@ class Spotmap {
                 label: 'Distance:'
             },
             timeSpeed: {
-              values: [4],
-              label: 'Time',
+                values: [4, 5],
+                label: 'Time',
             },
             circleMarker: { // Leaflet circle marker options for points used in this plugin
                 color: 'black',
@@ -134,7 +134,7 @@ class Spotmap {
                 });
 
                 let lastPoint = self.points[self.points.length - 1];
-                self.sailboat = L.marker(L.latLng(lastPoint.latitude, lastPoint.longitude), {interactive: false, icon: icon}).addTo(self.map);
+                self.sailboat = L.marker(L.latLng(lastPoint.latitude, lastPoint.longitude), { interactive: false, icon: icon }).addTo(self.map);
 
             }
             if (self.options.gpx) {
@@ -184,7 +184,7 @@ class Spotmap {
 
                 }
                 self.calculateTrip();
-                info.update({'Distance': self.formatDistance(self.totalDistance), 'Moving': self.formatDuration(self.totalMovingSeconds), 'Elapsed': self.formatDuration(self.totalSeconds)})
+                info.update({ 'Distance': self.formatDistance(self.totalDistance), 'Moving': self.formatDuration(self.totalMovingSeconds), 'Elapsed': self.formatDuration(self.totalSeconds) })
             }
             // add feeds to layercontrol
             lodash.forEach(self.layers.feeds, function (value, key) {
@@ -246,11 +246,13 @@ class Spotmap {
                                 if (self.options.mapcenter == 'last') {
                                     self.map.setView([entry.latitude, entry.longitude], 14);
                                 }
-                                if (self.sailboat){
+                                if (self.sailboat) {
                                     self.sailboat.setLatLng(L.latLng(entry.latitude, entry.longitude));
                                 }
                             }
                         });
+
+
                     }, {
                         body: body,
                         filter: self.options.filterPoints
@@ -315,7 +317,7 @@ class Spotmap {
                         } else {
                             layer = L.tileLayer(overlay.url, overlay.options);
                         }
-                        if (overlay.enabled) layer.addTo( this.map );
+                        if (overlay.enabled) layer.addTo(this.map);
                         this.layerControl.addOverlay(layer, overlay.label);
                     }
 
@@ -484,10 +486,10 @@ class Spotmap {
         const stravaApiUrl = 'https://www.strava.com/api/v3/activities/10248558791';
         const accessToken = 'fc7dd583e5c7031e3498c5ebfddeed019ee56837';
         fetch(stravaApiUrl, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            })
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        })
             .then(response => response.json())
             .then(activity => {
                 if (activity && activity.map && activity.map.summary_polyline) {
@@ -541,12 +543,12 @@ class Spotmap {
     }
     formatDuration(seconds) {
         if (!seconds) return "now";
-      
+
         const years = Math.floor(seconds / (365 * 24 * 60 * 60));
         const months = Math.floor((seconds % (365 * 24 * 60 * 60)) / (30 * 24 * 60 * 60));
         const weeks = Math.floor((seconds % (30 * 24 * 60 * 60)) / (7 * 24 * 60 * 60));
         const days = Math.floor((seconds % (7 * 24 * 60 * 60)) / (24 * 60 * 60));
-      
+
         const durationArray = [];
         if (years > 0) durationArray.push(years === 1 ? "1 year" : `${years} years`);
         if (months > 0) durationArray.push(months === 1 ? "1 month" : `${months} months`);
@@ -642,7 +644,7 @@ class Spotmap {
             );
             const seconds = point.unixtime - lastPoint.unixtime;
             // only count as moving if short time between points
-            if (seconds < 2 * 60 * 60){
+            if (seconds < 2 * 60 * 60) {
                 this.totalMovingSeconds += seconds;
             }
             lastPoint = point;
@@ -782,7 +784,7 @@ class Spotmap {
             zIndexOffset += 1000;
         } else if (!lodash.includes(['CUSTOM', 'OK'], point.type)) {
             zIndexOffset -= 2000;
-        } else if (!lodash.includes(['HELP', 'HELP-CANCEL', ], point.type)) {
+        } else if (!lodash.includes(['HELP', 'HELP-CANCEL',], point.type)) {
             zIndexOffset -= 3000;
         }
 
