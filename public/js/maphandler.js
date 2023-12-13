@@ -700,6 +700,13 @@ class Spotmap {
             time: timeDiffSum
         };
     }
+    // calculate time and distance that we have traveled today
+    calculateTimeDistanceToday(index) {
+        const ms = +this.points[index].unixtime * 1000;
+        const now = Math.floor(new Date(ms) / 1000);
+        const today = new Date(ms).setHours(0, 0, 0, 0) / 1000;
+        return this.calculateTimeDistance(index, now - today);
+    }
     getPopupText(entry, index) {
         let message = `<b>${entry.device_name}</b> - ${this.timeSince(+entry.unixtime)} ago</br>`;
         message += '🕑 ' + entry.localtime + ' ' + entry.localdate + '</br>';
@@ -711,6 +718,7 @@ class Spotmap {
         message += 'Speed 1hr: ' + this.formatSpeed(this.calculateSpeed(index, 1 * 60 * 60)) + '</br>';
         message += 'Speed 24hr: ' + this.formatSpeed(this.calculateSpeed(index, 24 * 60 * 60)) + '</br>';
         message += 'Distance 24hr: ' + this.formatDistance(this.calculateTimeDistance(index, 24 * 60 * 60).distance) + '</br>';
+        message += 'Distance today: ' + this.formatDistance(this.calculateTimeDistanceToday(index).distance) + '</br>';
         // if (entry.altitude > 0)
         //     message += 'Altitude: ' + Number(entry.altitude) + 'm</br>';
         if (entry.battery_status == 'LOW')
