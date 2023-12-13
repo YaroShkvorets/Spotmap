@@ -479,6 +479,7 @@ class Spotmap_Admin {
 			return;
 		}
 		$url = "https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=".$row->latitude."&lon=".$row->longitude."&appid=".$token."&dt=".$row->time;//."&units=metric";
+		error_log('fetching weather at ' . $url);
 		$response = wp_remote_get( $url );
 		// error_log( wp_remote_retrieve_response_code($response) );
 		$json = wp_remote_retrieve_body( $response );
@@ -586,6 +587,8 @@ class Spotmap_Admin {
 
 		$latitude = $this->gps($exif["GPS"]["GPSLatitude"], $exif["GPS"]["GPSLatitudeRef"]);
 		$longitude = $this->gps($exif["GPS"]["GPSLongitude"], $exif["GPS"]["GPSLongitudeRef"]);
+		if ($latitude == 0 && $longitude == 0) { return; }
+
 		$model = $exif["IFD0"]['Make']." ".$exif["IFD0"]['Model'];
 		$timestamp = strtotime($exif["EXIF"]['DateTimeOriginal']);
 		$image = get_post_field('guid', $attachment_id);
