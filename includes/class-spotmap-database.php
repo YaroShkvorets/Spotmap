@@ -110,10 +110,10 @@ class Spotmap_Database {
 		return $points;
 	}
 	public function insert_point($point,$multiple = false){
-		// error_log(print_r($point,true));
 		if($point['unixTime'] == 1){
 			return 0;
 		}
+		// error_log(print_r($point,true));
 		$last_point = $this->get_last_point($point['feedId']);
 		
 		if($point['latitude'] > 90 || $point['latitude']< -90){
@@ -150,9 +150,13 @@ class Spotmap_Database {
 		$result = $wpdb->insert($wpdb->prefix."spotmap_points",	$data);
 		
 		// schedule event to calc local timezone 
-		wp_schedule_single_event( time(), 'spotmap_get_timezone_hook' );
+		if ( ! wp_next_scheduled( 'spotmap_get_timezone_hook' ) ) {
+			wp_schedule_single_event( time() + 5,'spotmap_get_timezone_hook' );
+		}
 		// schedule event to get weather
-		wp_schedule_single_event( time(), 'spotmap_get_weather_hook' );
+		if ( ! wp_next_scheduled( 'spotmap_get_weather_hook' ) ) {
+			wp_schedule_single_event( time() + 5,'spotmap_get_weather_hook' );
+		}
 		return $result;
 	}
 	/**
