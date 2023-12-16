@@ -9,7 +9,7 @@ class Spotmap {
         this.debug(this.options);
         this.map = {};
         this.points = [];
-        this.speedUnit = 'kn';
+        this.speedUnit = 'kt';
         this.distanceUnit = 'nm';
         this.tempUnit = 'C';
         this.layerControl = L.control.layers({}, {}, {
@@ -85,7 +85,7 @@ class Spotmap {
             lengthUnit: {
                 factor: 0.539956803, //  from km to nm
                 display: 'Nautical Miles',
-                speedDisplay: 'kn',
+                speedDisplay: 'kt',
                 decimal: 2,
                 label: 'Distance:'
             },
@@ -512,7 +512,7 @@ class Spotmap {
                     return `${(+speed * 3.6).toFixed(decimals)} km/h`;
                 case 'ms':
                     return `${(+speed).toFixed(decimals)} m/s`;
-                case 'kn':
+                case 'kt':
                     return `${(+speed * 1.94384).toFixed(decimals)} knots`;
                 case 'mph':
                     return `${(+speed * 2.23694).toFixed(decimals)} mph`;
