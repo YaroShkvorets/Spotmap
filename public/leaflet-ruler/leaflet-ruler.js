@@ -50,6 +50,9 @@
       this._allLayers = L.layerGroup();
       return this._container;
     },
+    setHomePoint(latlng) {
+      this.homePoint = latlng;
+    },
     onRemove: function() {
       L.DomEvent.off(this._container, 'click', this._toggleMeasure, this);
     },
@@ -68,6 +71,11 @@
         this._tempPoint = L.featureGroup().addTo(this._allLayers);
         this._pointLayer = L.featureGroup().addTo(this._allLayers);
         this._polylineLayer = L.featureGroup().addTo(this._allLayers);
+        if (this.homePoint) {
+          this._clickedLatLong = this.homePoint;
+          this._clickedPoints.push(this.homePoint);
+          this._clickCount++;
+        }
         this._allLayers.addTo(this._map);
         this._map._container.style.cursor = 'crosshair';
         this._map.on('click', this._clicked, this);
@@ -168,11 +176,12 @@
       if (this._clickCount <= 1) this._map.removeLayer(this._pointLayer);
       this._choice = false;
       L.DomEvent.on(this._container, 'click', this._toggleMeasure, this);
+      this.homePoint = null;
       this._toggleMeasure();
     },
     _formatDuration: function(hours_){
       if (!hours_) return "now";
-
+    
       const years = Math.floor(hours_ / (365 * 24));
       const months = Math.floor((hours_ % (365 * 24)) / (30 * 24));
       const weeks = Math.floor((hours_ % (30 * 24)) / (7 * 24));
@@ -180,7 +189,7 @@
       const hours = Math.floor(hours_ % 24);
       const minutes = Math.floor((hours_ % 1) * 60);
       const seconds = Math.floor(((hours_ % 1) * 60) % 1 * 60);
-
+    
       const durationArray = [];
       if (years > 0) durationArray.push(years === 1 ? "1 year" : `${years} years`);
       if (months > 0) durationArray.push(months === 1 ? "1 month" : `${months} months`);
@@ -191,7 +200,7 @@
       if (seconds > 0) durationArray.push(seconds === 1 ? "1 second" : `${seconds} seconds`);
 
       return durationArray.slice(0, 2).join(" ");
-    }
+    } 
 
   });
   L.control.ruler = function(options) {

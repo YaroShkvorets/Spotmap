@@ -23,6 +23,7 @@ class Spotmap {
         this.totalSeconds = 0;
         this.totalMovingSeconds = 0;
         this.sailboat = null;
+        this.ruler = {};
     }
 
     doesFeedExists(feedName) {
@@ -100,9 +101,9 @@ class Spotmap {
             lineStyle: { // Leaflet polyline options for lines used in this plugin
                 color: 'black',
                 dashArray: '1,6'
-            }
+            },
         };
-        L.control.ruler(rulerOptions).addTo(this.map);
+        this.ruler = L.control.ruler(rulerOptions).addTo(this.map);
 
         // define obj to post data
         let body = {
@@ -135,6 +136,7 @@ class Spotmap {
 
                 let lastPoint = self.points[self.points.length - 1];
                 self.sailboat = L.marker(L.latLng(lastPoint.latitude, lastPoint.longitude), { interactive: false, icon: icon }).addTo(self.map);
+                self.ruler.setHomePoint({lat: +lastPoint.latitude, lng: +lastPoint.longitude});
 
             }
             if (self.options.gpx) {
